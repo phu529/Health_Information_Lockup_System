@@ -1,0 +1,46 @@
+#Chủ đề về `Hệ thống tra cứu triệu chứng và thông tin sức khỏe`
+
+-Mục tiêu đề tài: Xây dựng một chương trình hỗ trợ người dùng tra cứu thông tin về triệu chứng, bệnh lý phổ biến và thông tin thuốc mang tính tham khảo, dựa trên dữ liệu được quản lý tập trung. Hệ thống không thay thế chẩn đoán y khoa mà chỉ đóng vai trò cung cấp thông tin sức khỏe tổng quát.
+
+-Mô hình hoạt động: các thông tin được xử lý tập trung thông qua Server, các máy Client kết nối với Server qua mạng LAN để gửi và nhận dữ liệu.
+
+-Lưu trữ dữ liệu: Các thông tin như danh mục triệu chứng, danh mục bệnh lý, thông tin thuốc tham khảo, lịch sử tra cứu của người dùng được lưu trữ trong cơ sở dữ liệu. Server chịu trách nhiệm truy vấn, thêm, sửa, xóa và cập nhật dữ liệu trong Database.
+
+-Phần bảo mật thông tin
+
+-Phân quyền người dùng: Người dùng thường/Quản trị nội dung/Quản trị hệ thống(server)
+
+-Dữ liệu về các loại bệnh sẽ được lấy từ những nguồn công khai và đáng tin cậy (WHO, Bộ Y tế, MSD Manual,...)
+
+- Do chương trình chỉ mang tính chất đồ án ko dùng để thương mại hóa với mỗi lần chuẩn đoán và đưa ra thông tin sẽ luôn hiện thị ra màng hình client "Thông tin chỉ mang tính tham khảo, không thể thay thế chẩn đoán của bác sĩ,nếu vấn đề của bạn quan trọng hãy đến các bệnh viện gần nhất"
+
+###Các phần có thể làm trong quản lý dữ liệu y tế
+
+*các chức năng hiển thị bên phía client
+-Đối với danh mục triệu chứng, có thể phân theo nhóm cơ quan (Hô hấp / Tiêu hóa / Da liễu / Toàn thân...) để người dùng chọn nhanh thay vì gõ tự do.
+
+-Người dùng chọn nhiều triệu chứng cùng lúc, hệ thống gửi danh sách này lên Server để đối chiếu với dữ liệu bệnh lý liên quan.
+
+###Các phần có thể làm trong tra cứu / gợi ý thông tin
+
+-Sau khi chọn triệu chứng, hệ thống trả về danh sách các bệnh lý có khả năng liên quan kèm mức độ phù hợp tham khảo (không dùng từ "chẩn đoán chính xác" mà nên dùng "gợi ý tham khảo").
+
+-Với mỗi bệnh lý, hiển thị thông tin mô tả ngắn, mức độ phổ biến, và khi nào nên đi khám bác sĩ.
+
+### Người dùng (tài khoản cá nhân)
+-Với mỗi tài khoản, dữ liệu lưu trên Database có thể giữ lại lịch sử tra cứu trước đó
+-có thể làm tính năng nhắc nhở tái khám hoặc lưu hồ sơ sức khỏe cơ bản (nhóm máu, dị ứng thuốc, bệnh nền) để tra cứu nhanh hơn ở lần sau.
+
+###Chức năng tìm kiếm theo tên bệnh/tên thuốc
+-Ngoài chức năng tra cứu bệnh dựa trên triệu chứng, hệ thống cho phép người dùng tìm kiếm trực tiếp theo tên bệnh hoặc tên thuốc.
+(này ta có thể xếp vào 1 database có các bảng và thuộc tính riêng, cụ thể ví dụ như ta tìm kiếm trên WHO thuốc nào thường dùng cho cảm cúm, triệu chứng, và thông tin liên quan xếp vào 1 cột cụ thể giúp cho chương trình chạy nhanh hơn
+VD:
+
+Bệnh
+├── Tên bệnh: Cảm cúm
+├── Triệu chứng: Sốt, ho, đau họng, mệt mỏi...
+├── Thông tin: ...
+└── Thuốc liên quan
+    ├── Paracetamol
+    ├── ...	
+)
