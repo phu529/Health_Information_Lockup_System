@@ -11,4 +11,4 @@ database/          Script SQL
 ```
 
 Mở file `.sln` bằng Visual Studio (.NET 10), Build Solution phải 0 lỗi.
-`main` chỉ chứa bản hoàn thiện cuối kỳ; làm việc trên nhánh `feature/*`.
+`main` chỉ chứa sản phẩm đồ án cuối cùng; làm việc trên nhánh `feature/*`.
