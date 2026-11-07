@@ -2,7 +2,7 @@
 
 ## Phạm vi bổ sung
 
-Ở Bước 1.2, mình bổ sung một số chức năng liên quan đến mật khẩu ở phía giao diện Client, phối hợp cùng Trọng Phú. Mục đích là giúp người dùng dễ theo dõi độ mạnh mật khẩu và thuận tiện hơn khi sử dụng chức năng đăng nhập, đăng ký.
+Ở Bước 1.2, bổ sung một số chức năng liên quan đến mật khẩu ở phía giao diện Client, phối hợp cùng Trọng Phú. Mục đích là giúp người dùng dễ theo dõi độ mạnh mật khẩu và thuận tiện hơn khi sử dụng chức năng đăng nhập, đăng ký.
 
 ## 1. Thanh đánh giá độ mạnh mật khẩu – `DoManhMatKhau.cs`
 
