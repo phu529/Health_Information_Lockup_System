@@ -1,127 +1,246 @@
--- Tạo cơ sở dữ liệu
-CREATE DATABASE IF NOT EXISTS QuanLyBenhHoHap;
-USE QuanLyBenhHoHap;
+-- =========================================================================
+-- SCRIPT GỘP TOÀN BỘ SEED DATA: NHÓM BỆNH HÔ HẤP CHO HỆ THỐNG TRA CỨU SỨC KHỎE
+-- =========================================================================
 
--- 1. Bảng lưu trữ thông tin bệnh lý hô hấp
-CREATE TABLE BenhHoHap (
-    MaBenh VARCHAR(20) PRIMARY KEY,
-    TenBenh NVARCHAR(150) NOT NULL,
-    TrieuChung NTEXT NOT NULL,
-    MoTa NTEXT NOT NULL,
-    KhiNaoCanDiKham NTEXT NOT NULL,
-    LinkNguon VARCHAR(255) NOT NULL
-);
+-- 1. Thêm danh mục chuyên khoa Hô hấp
+INSERT INTO `dbo`.`Categories` (`CategoryID`, `TenDanhMuc`, `MoTa`, `IsActive`) VALUES
+(1, N'Bệnh Hô Hấp', N'Các bệnh lý liên quan đến đường hô hấp trên và dưới như mũi, họng, phế quản và phổi.', 1);
 
--- 2. Bảng lưu trữ thuốc tham khảo từ các nhà thuốc
-CREATE TABLE ThuocThamKhao (
-    MaThuoc INT IDENTITY(1,1) PRIMARY KEY,
-    MaBenh VARCHAR(20),
-    TenThuoc NVARCHAR(150) NOT NULL,
-    NhaThuoc NVARCHAR(100) NOT NULL, -- Ví dụ: FPT Long Châu, Pharmacity
-    CachDung NVARCHAR(255),
-    FOREIGN KEY (MaBenh) REFERENCES BenhHoHap(MaBenh)
-);
+-- 2. Thêm tài khoản quản trị mẫu (dùng cho trường NguoiCapNhat)
+INSERT INTO `dbo`.`Users` (`UserID`, `TenDangNhap`, `MatKhauBam`, `Salt`, `HoTen`, `VaiTro`) VALUES
+(1, 'admin_content', 'dummy_hash_string_64_chars_length_for_testing_purposes_abc123', 'dummy_salt_32_chars', N'Nguyễn Quản Trị Nội Dung', 'ContentAdmin');
 
--- 3. INSERT dữ liệu danh sách các bệnh hô hấp phổ biến (10 bệnh)
-INSERT INTO BenhHoHap (MaBenh, TenBenh, TrieuChung, MoTa, KhiNaoCanDiKham, LinkNguon) VALUES
-('BH01', N'Cảm cúm (Influenza)', 
- N'Sốt, ớn lạnh, đau đầu, đau mỏi cơ bắp, mệt mỏi, ho khan, nghẹt mũi hoặc sổ mũi, đau họng.', 
- N'Cảm cúm là một bệnh nhiễm trùng đường hô hấp cấp tính do virus cúm gây ra, lây lan dễ dàng qua đường không khí khi người bệnh ho hoặc hắt hơi.', 
- N'Khi sốt cao kéo dài trên 38.5°C quá 3 ngày, khó thở, tức ngực, hoặc các triệu chứng trở nặng không thuyên giảm sau một tuần.', 
- N'https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)'),
+-- 3. Thêm toàn bộ các triệu chứng thuộc hệ hô hấp (SymptomID từ 1 đến 15)
+INSERT INTO `dbo`.`Symptoms` (`SymptomID`, `TenTrieuChung`, `MoTa`, `Nguon`, `IsActive`) VALUES
+(1, N'Sốt cao', N'Nhiệt độ cơ thể tăng cao trên 38.5 độ C, kèm theo cảm giác ớn lạnh.', N'Bộ Y tế', 1),
+(2, N'Ho khan, ho có đờm', N'Tình trạng ho kéo dài, có thể kèm theo đờm trắng hoặc vàng xanh.', N'WHO', 1),
+(3, N'Khó thở, thở khò khè', N'Cảm giác hụt hơi, thở ngắn, phát ra tiếng rít khi thở ra hoặc hít vào.', N'Bệnh viện Chợ Rẫy', 1),
+(4, N'Đau rát họng', N'Cảm giác đau, ngứa rát vùng cổ họng khi nuốt nước bọt hoặc ăn uống.', N'MSD Manual', 1),
+(5, N'Đau tức ngực', N'Cảm giác nặng ngực, đau tức âm ỉ hoặc nhói ở vùng lồng ngực khi hít thở sâu.', N'Bệnh viện Tâm Anh', 1),
+(6, N'Sổ mũi, nghẹt mũi', N'Chảy nước mũi trong hoặc đặc, nghẹt một hoặc cả hai bên lỗ mũi.', N'Bộ Y tế', 1),
+(7, N'Đau họng, nuốt đau', N'Cảm giác vướng víu, đau rát vùng họng khi ăn uống hoặc nuốt nước bọt.', N'WHO', 1),
+(8, N'Hắt hơi liên tục', N'Các cơn hắt hơi đột ngột do kích ứng niêm mạc mũi.', N'Bệnh viện Chợ Rẫy', 1),
+(9, N'Mệt mỏi, suy nhược', N'Cảm giác kiệt sức, thiếu năng lượng toàn thân khi nhiễm trùng.', N'MSD Manual', 1),
+(10, N'Đau đầu, nhức mỏi cơ khớp', N'Đau ê ẩm vùng đầu, cơ bắp và các khớp khi bị sốt virus.', N'Bộ Y tế', 1),
+(11, N'Khạc đờm xanh hoặc vàng', N'Ho tống ra đờm có màu sắc bất thường do nhiễm khuẩn đường thở.', N'Bệnh viện Tâm Anh', 1),
+(12, N'Thở rít, thở khò khè', N'Âm thanh phát ra khi không khí đi qua đường thở bị hẹp.', N'Bệnh viện Chợ Rẫy', 1),
+(13, N'Khàn tiếng, mất tiếng', N'Tổn thương dây thanh quản gây thay đổi âm sắc giọng nói.', N'Bộ Y tế', 1),
+(14, N'Tức ngực, khó thở khi gắng sức', N'Khó thở tăng lên rõ rệt khi vận động mạnh hoặc leo cầu thang.', N'Bệnh viện Tâm Anh', 1),
+(15, N'Sụt cân không rõ nguyên nhân', N'Giảm cân nhanh trong thời gian ngắn do bệnh lý mạn tính tiêu hao.', N'WHO', 1);
 
-('BH02', N'Viêm phổi (Pneumonia)', 
- N'Ho có đờm đặc hoặc có máu, đau ngực khi thở hoặc ho, khó thở, sốt cao kèm vã mồ hôi và ớn lạnh, mệt mỏi.', 
- N'Viêm phổi là tình trạng nhiễm trùng làm tổn thương túi khí ở một hoặc cả hai bên phổi, túi khí có thể đầy mủ hoặc dịch nhầy.', 
- N'Xuất hiện tình trạng khó thở nghiêm trọng, đau ngực dữ dội, môi hoặc móng tay chuyển sang màu tím xanh, sốt cao liên tục không hạ.', 
- N'https://www.vinmec.com/vie/bai-viet/cac-loai-viem-phoi-thuong-gap-vi'),
+-- 4. Thêm toàn bộ 13 Bệnh lý Hô hấp (DiseaseID từ 1 đến 13)
+INSERT INTO `dbo`.`Diseases` (`DiseaseID`, `CategoryID`, `TenBenh`, `MaICD`, `TongQuan`, `NguyenNhan`, `PhongNgua`, `CanhBao`, `MucDoPhoBien`, `Nguon`, `NgayTruyCap`, `IsPublished`, `NguoiCapNhat`) VALUES
+(1, 1, N'Cảm cúm', 'J11', 
+ N'Cảm cúm là bệnh nhiễm trùng đường hô hấp cấp tính do virus cúm gây ra, lây lan dễ dàng qua đường không khí khi người bệnh ho hoặc hắt hơi.', 
+ N'Do các chủng virus cúm A, cúm B hoặc cúm C xâm nhập qua đường hô hấp.', 
+ N'Tiêm vaccine cúm định kỳ hàng năm, đeo khẩu trang nơi công cộng, rửa tay thường xuyên bằng xà phòng.', 
+ N'Cẩn trọng với biến chứng viêm phổi ở trẻ em, người cao tuổi và người có bệnh nền.', 
+ N'Rất thường gặp', N'Bộ Y tế / WHO', '2026-03-01', 1, 1),
 
-('BH03', N'Hen suyễn (Asthma)', 
- N'Thở khò khè, khó thở, tức ngực, ho khan đặc biệt là về đêm hoặc sáng sớm khi trời lạnh.', 
- N'Hen suyễn là bệnh mãn tính làm viêm và thu hẹp đường thở, khiến không khí khó lưu thông, dễ bùng phát khi tiếp xúc với dị nguyên.', 
- N'Khi cơn ho khò khè không đáp ứng với thuốc cắt cơn thông thường, môi tím tái, nhịp thở quá nhanh, không thể nói hết câu.', 
- N'https://www.vinmec.com/vie/bai-viet/benh-hen-suyen-nhung-dieu-can-biet-vi'),
+(2, 1, N'Viêm phổi', 'J18', 
+ N'Viêm phổi là tình trạng nhiễm trùng làm tổn thương các túi khí ở một hoặc cả hai bên phổi, khiến túi khí chứa đầy dịch hoặc mủ gây ho, sốt và khó thở.', 
+ N'Do vi khuẩn (phế cầu khuẩn), virus hoặc nấm tấn công hệ hô hấp dưới.', 
+ N'Giữ ấm cơ thể khi thời tiết chuyển mùa, bỏ hút thuốc lá, tiêm vaccine phế cầu và cúm.', 
+ N'Viêm phổi nặng có thể gây suy hô hấp nguy hiểm đến tính mạng nếu không được điều trị kịp thời.', 
+ N'Thường gặp', N'Bệnh viện Chợ Rẫy', '2026-03-02', 1, 1),
 
-('BH04', N'Viêm phế quản cấp (Acute Bronchitis)', 
- N'Ho kéo dài (có đờm trong hoặc màu vàng xanh), sốt nhẹ, mệt mỏi, thở khò khè, rát ngực khi ho.', 
- N'Viêm phế quản cấp là tình trạng viêm niêm mạc của ống phế quản mang không khí đến và đi từ phổi, thường do nhiễm virus sau cảm cúm.', 
- N'Ho kéo dài hơn 3 tuần, sốt cao liên tục trên 38°C, thở khò khè nặng hoặc ho ra máu.', 
- N'https://www.vinmec.com/vie/bai-viet/chan-doan-va-dieu-tri-viem-phe-quan-cap-vi'),
+(3, 1, N'Hen suyễn', 'J45', 
+ N'Hen suyễn là bệnh lý viêm mạn tính đường mạn phế quản, làm tăng độ nhạy cảm và gây co thắt đường thở dẫn đến các cơn khó thở đột ngột.', 
+ N'Do dị ứng với phấn hoa, khói bụi, lông thú cưng, thời tiết lạnh hoặc di truyền.', 
+ N'Tránh tiếp xúc với các dị nguyên, giữ môi trường sống sạch sẽ, luôn mang theo thuốc cắt cơn theo chỉ định bác sĩ.', 
+ N'Cơn hen cấp tính nặng có thể dẫn đến ngạt thở, tím tái và tử vong nhanh chóng.', 
+ N'Thường gặp', N'WHO / Bệnh viện Tâm Anh', '2026-03-03', 1, 1),
 
-('BH05', N'Bệnh phổi tắc nghẽn mãn tính (COPD)', 
- N'Khó thở mãn tính dai dẳng (tăng dần theo thời gian), ho mãn tính có đờm, thở khò khè, tức ngực.', 
- N'COPD là bệnh lý viêm phổi mãn tính gây cản trở luồng khí từ phổi, thường do hút thuốc lá lâu năm hoặc tiếp xúc với khói bụi độc hại.', 
- N'Khi tình trạng khó thở đột ngột nghiêm trọng hơn, đờm đổi màu hoặc tăng lượng đờm đáng kể, môi tím tái.', 
- N'https://www.vinmec.com/vie/bai-viet/benh-phoi-tac-nghen-man-tinh-copd-vi'),
+(4, 1, N'Viêm họng cấp', 'J02', 
+ N'Viêm họng cấp là tình trạng viêm niêm mạc và các tổ chức bạch huyết của họng, thường xuất hiện đột ngột khi thời tiết thay đổi.', 
+ N'Do virus (Adenovirus, Rhinovirus) hoặc vi khuẩn (liên cầu khuẩn nhóm A) gây ra.', 
+ N'Giữ ấm cổ họng, súc miệng nước muối sinh hoạt hàng ngày, tránh uống nước đá lạnh.', 
+ N'Biến chứng sốt thấp khớp hoặc viêm cầu thận nếu do liên cầu khuẩn nhóm A mà không điều trị.', 
+ N'Rất thường gặp', N'Bộ Y tế', '2026-03-04', 1, 1),
 
-('BH06', N'Viêm xoang (Sinusitis)', 
- N'Đau tức vùng mặt (trán, má, giữa hai mắt), nghẹt mũi, chảy mũi đờm đặc màu xanh/vàng, giảm khứu giác, ho về đêm.', 
- N'Viêm xoang là tình trạng viêm hoặc sưng đau ở niêm mạc lót trong các xoang cạnh mũi, làm tắc nghẽn dịch nhầy.', 
- N'Đau đầu dữ dội không giảm, sưng đỏ quanh mắt, nhìn đôi (nhìn 1 thành 2), cổ cứng hoặc sốt cao.', 
- N'https://www.vinmec.com/vie/benh/viem-xoang-2953'),
+(5, 1, N'Viêm phế quản cấp', 'J20', 
+ N'Viêm phế quản cấp là tình trạng viêm niêm mạc ống phế quản dẫn khí vào phổi, gây ho nhiều kèm đờm.', 
+ N'Phần lớn do virus cảm lạnh hoặc cúm tấn công sau khi nhiễm trùng đường hô hấp trên.', 
+ N'Bỏ hút thuốc lá, tránh khói bụi ô nhiễm, tiêm vaccine phòng cúm và phế cầu.', 
+ N'Có thể tiến triển thành viêm phổi nặng ở người có hệ miễn dịch suy yếu.', 
+ N'Rất thường gặp', N'Bệnh viện Chợ Rẫy', '2026-03-04', 1, 1),
 
-('BH07', N'Viêm họng cấp (Acute Pharyngitis)', 
- N'Đau họng, nuốt đau, họng đỏ sưng, sốt, đau đầu, nổi hạch ở cổ, ho khan.', 
- N'Viêm họng cấp là tình trạng viêm nhiễm ở niêm mạc họng, phổ biến do nhiễm virus (cúm, Adenovirus) hoặc vi khuẩn (liên cầu khuẩn nhóm A).', 
- N'Đau họng dữ dội không thể nuốt nước bọt, khó thở, sốt cao trên 39°C, hoặc đau họng kéo dài trên 1 tuần.', 
- N'https://www.vinmec.com/vie/benh/viem-hong-cap-2952'),
+(6, 1, N'Viêm mũi dị ứng', 'J30', 
+ N'Viêm mũi dị ứng là phản ứng của hệ miễn dịch khi hít phải các dị nguyên trong không khí như phấn hoa, bụi nhà.', 
+ N'Do cơ địa dị ứng tiếp xúc với khói bụi, lông động vật, thời tiết lạnh.', 
+ N'Vệ sinh nhà cửa sạch sẽ, đeo khẩu trang khi ra đường, tránh xa các tác nhân gây dị ứng.', 
+ N'Làm giảm chất lượng cuộc sống, dễ dẫn đến biến chứng viêm xoang mạn tính.', 
+ N'Rất thường gặp', N'WHO / Bệnh viện Tâm Anh', '2026-03-04', 1, 1),
 
-('BH08', N'Viêm thanh quản (Laryngitis)', 
- N'Khàn tiếng, mất tiếng, cảm giác vướng họng, ho khan, sốt nhẹ.', 
- N'Viêm thanh quản xảy ra khi dây thanh âm bị viêm, sưng nề do nói nhiều, la hét, nhiễm trùng đường hô呼吸 hoặc hít phải chất kích thích.', 
- N'Mất tiếng hoặc khàn tiếng kéo dài trên 2 tuần, khó thở, ho ra máu, khó nuốt nặng.', 
- N'https://www.vinmec.com/vie/benh/viem-thanh-quan-3165'),
+(7, 1, N'Viêm xoang mạn tính', 'J32', 
+ N'Viêm xoang mạn tính là tình trạng sưng viêm các hốc xoang xung quanh mũi kéo dài trên 12 tuần không khỏi.', 
+ N'Do viêm mũi dị ứng kéo dài, polyp mũi, vách ngăn mũi lệch hoặc nhiễm trùng vi khuẩn.', 
+ N'Điều trị dứt điểm viêm mũi, giữ độ ẩm không khí trong phòng, tránh khói thuốc.', 
+ N'Nhiễm trùng có thể lan sang ổ mắt hoặc màng não nếu không điều trị đúng cách.', 
+ N'Thường gặp', N'Bệnh viện Tâm Anh', '2026-03-04', 1, 1),
 
-('BH09', N'Lao phổi (Pulmonary Tuberculosis)', 
- N'Ho kéo dài trên 3 tuần (có thể ho ra máu), sốt nhẹ về chiều, đổ mồ hôi đêm, sút cân không rõ nguyên nhân, mệt mỏi.', 
- N'Lao phổi là bệnh truyền nhiễm do vi khuẩn Mycobacterium tuberculosis gây ra, lây qua đường hô hấp khi người bệnh ho hoặc hắt hơi.', 
- N'Cần đi khám ngay khi ho kéo dài trên 2-3 tuần, ho ra máu, sốt về chiều và sụt cân nhanh chóng.', 
- N'https://www.vinmec.com/vie/benh/benh-lao-phoi-3183'),
+(8, 1, N'Bệnh phổi tắc nghẽn mạn tính (COPD)', 'J44', 
+ N'COPD là bệnh lý mạn tính gây cản trở lưu thông không khí từ phổi, làm người bệnh khó thở tăng dần theo thời gian.', 
+ N'Hút thuốc lá lâu năm là nguyên nhân hàng đầu, ngoài ra do khói bụi nghề nghiệp, ô nhiễm.', 
+ N'Tuyệt đối không hút thuốc lá, tránh tiếp xúc khói bếp than, tập thể dục hô hấp đều đặn.', 
+ N'Gây suy hô hấp mạn tính, ảnh hưởng nghiêm trọng đến tim mạch và tuổi thọ.', 
+ N'Thường gặp', N'Bộ Y tế / WHO', '2026-03-04', 1, 1),
 
-('BH10', N'Viêm mũi dị ứng (Allergic Rhinitis)', 
- N'Hắt hơi liên tục thành tràng, ngứa mũi, ngứa mắt, chảy nước mũi trong, nghẹt mũi.', 
- N'Viêm mũi dị ứng là phản ứng miễn dịch của cơ thể khi hít phải các chất gây dị ứng như phấn hoa, bụi nhà, lông thú nuôi, nấm mốc.', 
- N'Triệu chứng kéo dài ảnh hưởng nghiêm trọng đến giấc ngủ, sinh hoạt, hoặc có dấu hiệu biến chứng sang viêm xoang, viêm tai giữa.', 
- N'https://www.vinmec.com/vie/benh/viem-mui-di-ung-4751');
+(9, 1, N'Hen phế quản bội nhiễm', 'J45.9', 
+ N'Dạng hen phế quản có kèm theo tình trạng nhiễm khuẩn đường thở, làm tăng tiết đờm nhầy và khó thở nặng.', 
+ N'Do thời tiết thay đổi lạnh ẩm kết hợp vi khuẩn xâm nhập vào đường thở bị viêm sẵn.', 
+ N'Tuân thủ phác đồ điều trị dự phòng hen, tránh xa khói thuốc lá và dị nguyên.', 
+ N'Có nguy cơ cao dẫn đến cơn hen ác tính gây tử vong nếu chậm trễ cấp cứu.', 
+ N'Thường gặp', N'Bệnh viện Chợ Rẫy', '2026-03-04', 1, 1),
 
--- 4. INSERT dữ liệu thuốc tham khảo từ Nhà thuốc FPT Long Châu và Pharmacity
-INSERT INTO ThuocThamKhao (MaBenh, TenThuoc, NhaThuoc, CachDung) VALUES
--- Cảm cúm (BH01)
-('BH01', N'Paracetamol 500mg', N'FPT Long Châu', N'Uống 1 viên/lần khi sốt, cách nhau từ 4-6 tiếng'),
-('BH01', N'Decolgen Forte', N'Pharmacity', N'Uống 1 viên x 3 lần/ngày sau khi ăn'),
-('BH01', N'Vitamin C 1000mg', N'FPT Long Châu', N'Uống 1 viên pha loãng với nước vào ban ngày'),
+(10, 1, N'Lao phổi', 'A15', 
+ N'Lao phổi là bệnh truyền nhiễm nguy hiểm do trực khuẩn lao tấn công và phá hủy các mô phổi.', 
+ N'Do vi khuẩn Mycobacterium tuberculosis lây qua đường không khí khi người bệnh ho, khạc.', 
+ N'Tiêm vaccine BCG cho trẻ sơ sinh, cách ly nguồn lây, giữ nhà cửa thông thoáng nhiều ánh nắng.', 
+ N'Lây lan mạnh trong cộng đồng, gây ho ra máu và hoại tử mô phổi nếu không tuân thủ phác đồ dài hạn.', 
+ N'Ít gặp', N'Chương trình Chống lao Quốc gia / Bộ Y tế', '2026-03-04', 1, 1),
 
--- Viêm phổi (BH02)
-('BH02', N'Augmentin 1g', N'FPT Long Châu', N'Uống theo chỉ định nghiêm ngặt của bác sĩ (thường 2 lần/ngày)'),
-('BH02', N'Alpha Choay', N'Pharmacity', N'Ngậm dưới lưỡi hoặc uống theo hướng dẫn bác sĩ'),
+(11, 1, N'Áp xe phổi', 'J85', 
+ N'Áp xe phổi là ổ hoại tử mủ khu trú trong nhu mô phổi hình thành do ổ nhiễm trùng nặng.', 
+ N'Biến chứng của viêm phổi do vi khuẩn kỵ khí hoặc do hít phải dị vật, dịch dạ dày.', 
+ N'Điều trị sớm và dứt điểm các ổ nhiễm trùng đường hô hấp trên và dưới.', 
+ N'Ổ áp xe có thể vỡ vào màng phổi gây tràn mủ màng phổi rất nguy hiểm.', 
+ N'Hiếm gặp', N'Bệnh viện Chợ Rẫy', '2026-03-04', 1, 1),
 
--- Hen suyễn (BH03)
-('BH03', N'Ventolin Inhaler 100mcg', N'FPT Long Châu', N'Xịt cắt cơn theo hướng dẫn khi có triệu chứng khó thở khò khè'),
-('BH03', N'Seretide Diskus', N'Pharmacity', N'Hít dự phòng hàng ngày theo đơn của bác sĩ chuyên khoa'),
+(12, 1, N'Tràn dịch màng phổi', 'J90', 
+ N'Tình trạng tích tụ dịch bất thường khoang màng phổi làm ép xẹp phổi, gây khó thở dữ dội.', 
+ N'Do biến chứng viêm phổi, lao màng phổi, suy tim hoặc ung thư phổi.', 
+ N'Khám sức khỏe định kỳ, điều trị triệt để các bệnh lý nhiễm trùng nguyên phát.', 
+ N'Gây chèn ép tim phổi cấp tính, suy hô hấp đe dọa tính mạng.', 
+ N'Ít gặp', N'Bệnh viện Tâm Anh', '2026-03-04', 1, 1),
 
--- Viêm phế quản cấp (BH04)
-('BH04', N'Bisolvon 8mg', N'FPT Long Châu', N'Uống 1 viên x 3 lần/ngày để long đờm'),
-('BH04', N'Eugica Fort', N'Pharmacity', N'Uống 1-2 viên x 3 lần/ngày giúp giảm ho, dịu họng'),
+(13, 1, N'Viêm thanh quản cấp', 'J04', 
+ N'Viêm niêm mạc thanh quản cấp tính dẫn đến hiện tượng khàn tiếng hoặc mất giọng hoàn toàn.', 
+ N'Do sử dụng giọng quá mức (la hét, nói nhiều) hoặc nhiễm virus đường hô hấp trên.', 
+ N'Hạn chế nói to, uống nhiều nước ấm, tránh hút thuốc lá và uống rượu bia.', 
+ N'Có thể gây khó thở thanh quản cấp ở trẻ nhỏ (cần cấp cứu kịp thời).', 
+ N'Thường gặp', N'Bộ Y tế', '2026-03-04', 1, 1);
 
--- COPD (BH05)
-('BH05', N'Spiriva Respimat 2.5mcg', N'FPT Long Châu', N'Hít 2 nhát x 1 lần/ngày theo chỉ định bác sĩ'),
-('BH05', N'Symbicort Turbuhaler 160/4.5mcg', N'Pharmacity', N'Hít duy trì hàng ngày theo chỉ định của bác sĩ chuyên khoa'),
+-- 5. Thêm toàn bộ liên kết Bệnh lý với Triệu chứng (DiseaseSymptoms)
+INSERT INTO `dbo`.`DiseaseSymptoms` (`DiseaseID`, `SymptomID`, `MoTa`, `MucDoLienQuan`, `Nguon`, `NgayTruyCap`) VALUES
+-- Cảm cúm (DiseaseID = 1)
+(1, 1, N'Sốt cao đột ngột từ 38-39 độ C', 4, N'Bộ Y tế', '2026-03-01'),
+(1, 2, N'Ho khan hoặc ho ít đờm', 3, N'Bộ Y tế', '2026-03-01'),
+(1, 4, N'Đau rát họng khi nuốt', 5, N'Bộ Y tế', '2026-03-01'),
 
--- Viêm xoang (BH06)
-('BH06', N'Xịt mũi Xysal / Otrivin 0.1%', N'FPT Long Châu', N'Xịt mỗi bên mũi 1 lần, không dùng quá 7 ngày liên tục'),
-('BH06', N'Thông Xoang Nam Dược', N'Pharmacity', N'Uống 4 viên/ngày chia 2 lần sau khi ăn'),
+-- Viêm phổi (DiseaseID = 2)
+(2, 1, N'Sốt cao kéo dài, rét run', 5, N'Bệnh viện Chợ Rẫy', '2026-03-02'),
+(2, 2, N'Ho có đờm đặc, màu vàng hoặc xanh', 5, N'Bệnh viện Chợ Rẫy', '2026-03-02'),
+(2, 3, N'Khó thở, thở gấp, hụt hơi', 5, N'Bệnh viện Chợ Rẫy', '2026-03-02'),
+(2, 5, N'Đau tức ngực tăng lên khi ho hoặc hít sâu', 4, N'Bệnh viện Chợ Rẫy', '2026-03-02'),
 
--- Viêm họng cấp (BH07)
-('BH07', N'Viên ngậm Strepsils', N'Pharmacity', N'Ngậm 1 viên cách nhau 2-3 giờ khi đau họng'),
-('BH07', N'Siro Prospan', N'FPT Long Châu', N'Uống 5ml x 3 lần/ngày giúp giảm ho, dịu niêm mạc họng'),
+-- Hen suyễn (DiseaseID = 3)
+(3, 2, N'Ho khan dai dẳng, nhất là về đêm hoặc sáng sớm', 3, N'Bệnh viện Tâm Anh', '2026-03-03'),
+(3, 3, N'Khó thở khò khè, nghe tiếng rít rõ rệt', 5, N'Bệnh viện Tâm Anh', '2026-03-03'),
+(3, 5, N'Cảm giác thắt chặt, tức nặng lồng ngực', 4, N'Bệnh viện Tâm Anh', '2026-03-03'),
 
--- Viêm thanh quản (BH08)
-('BH08', N'Bảo Thanh viên ngậm', N'FPT Long Châu', N'Ngậm 1 viên khi bị khàn tiếng, rát họng'),
-('BH08', N'Xịt họng Nhất Nhất', N'Pharmacity', N'Xịt vào họng 2-3 lần/ngày'),
+-- Viêm họng cấp (DiseaseID = 4)
+(4, 4, N'Đau rát họng tăng mạnh khi nuốt', 5, N'Bộ Y tế', '2026-03-04'),
+(4, 7, N'Cảm giác vướng và đau họng rõ rệt', 5, N'Bộ Y tế', '2026-03-04'),
+(4, 9, N'Mệt mỏi, uể oải', 3, N'Bộ Y tế', '2026-03-04'),
 
--- Lao phổi (BH09)
-('BH09', N'Turmocox 4 (Thuốc kháng lao)', N'FPT Long Châu', N'Dùng nghiêm ngặt theo phác đồ điều trị của Chương trình Chống lao Quốc gia'),
+-- Viêm phế quản cấp (DiseaseID = 5)
+(5, 2, N'Ho khan chuyển sang ho có đờm đục', 5, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+(5, 9, N'Mệt mỏi toàn thân do ho nhiều', 3, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+(5, 11, N'Khạc đờm vàng xanh', 4, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
 
--- Viêm mũi dị ứng (BH10)
-('BH10', N'Telfast HD 180mg / Loratadin 10mg', N'Pharmacity', N'Uống 1 viên/ngày vào buổi sáng'),
-('BH10', N'Xịt mũi Flixonase / Avamys', N'FPT Long Châu', N'Xịt mỗi bên mũi 1-2 nhát/ngày');
+-- Viêm mũi dị ứng (DiseaseID = 6)
+(6, 6, N'Sổ mũi nước trong liên tục', 5, N'Bệnh viện Tâm Anh', '2026-03-04'),
+(6, 8, N'Hắt hơi từng tràng vào buổi sáng sớm', 5, N'Bệnh viện Tâm Anh', '2026-03-04'),
+
+-- Viêm xoang mạn tính (DiseaseID = 7)
+(7, 6, N'Nghẹt mũi, chảy dịch mũi mủ xanh', 5, N'Bệnh viện Tâm Anh', '2026-03-04'),
+(7, 10, N'Đau nhức vùng trán và hốc mắt', 4, N'Bệnh viện Tâm Anh', '2026-03-04'),
+
+-- COPD (DiseaseID = 8)
+(8, 3, N'Khó thở mạn tính, tăng dần theo thời gian', 5, N'Bộ Y tế', '2026-03-04'),
+(8, 14, N'Tức ngực, khó thở khi làm việc nặng', 5, N'Bộ Y tế', '2026-03-04'),
+(8, 15, N'Sụt cân ở giai đoạn nặng', 3, N'Bộ Y tế', '2026-03-04'),
+
+-- Hen phế quản bội nhiễm (DiseaseID = 9)
+(9, 3, N'Cơn khó thở khò khè đột ngột', 5, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+(9, 11, N'Ho khạc đờm đặc do bội nhiễm vi khuẩn', 4, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+
+-- Lao phổi (DiseaseID = 10)
+(10, 2, N'Ho kéo dài trên 3 tuần không dứt', 5, N'Chương trình Chống lao', '2026-03-04'),
+(10, 9, N'Sốt nhẹ về chiều, đổ mồ hôi trộm', 4, N'Chương trình Chống lao', '2026-03-04'),
+(10, 15, N'Sụt cân nhanh, gầy sút', 5, N'Chương trình Chống lao', '2026-03-04'),
+
+-- Áp xe phổi (DiseaseID = 11)
+(11, 1, N'Sốt cao rét run liên tục', 5, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+(11, 11, N'Ho khạc lượng lớn đờm mủ hôi thối', 5, N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+
+-- Tràn dịch màng phổi (DiseaseID = 12)
+(12, 3, N'Khó thở tăng dần, tức nặng một bên ngực', 5, N'Bệnh viện Tâm Anh', '2026-03-04'),
+(12, 5, N'Đau tức ngực rõ rệt khi nằm nghiêng', 4, N'Bệnh viện Tâm Anh', '2026-03-04'),
+
+-- Viêm thanh quản cấp (DiseaseID = 13)
+(13, 13, N'Khàn tiếng nặng, có khi mất giọng hoàn toàn', 5, N'Bộ Y tế', '2026-03-04'),
+(13, 7, N'Cảm giác khô rát, vướng ở cổ họng', 3, N'Bộ Y tế', '2026-03-04');
+
+-- 6. Thêm toàn bộ các loại thuốc tham khảo từ FPT Long Châu và Pharmacity (MedicineID từ 1 đến 12)
+INSERT INTO `dbo`.`Medicines` (`MedicineID`, `TenThuoc`, `HoatChat`, `DangBaoChe`, `ChiDinh`, `ChongChiDinh`, `TacDungPhu`, `CanHao`, `CanKeDon`, `Nguon`, `NgayTruyCap`, `IsActive`) VALUES
+(1, N'Paracetamol 500mg', N'Paracetamol (Acetaminophen)', N'Viên nén', N'Giảm đau, hạ sốt từ nhẹ đến trung bình.', N'Mẫn cảm với Paracetamol, suy gan nặng.', NULL, NULL, 0, N'Nhà thuốc FPT Long Châu', '2026-03-01', 1),
+(2, N'Decolgen Forte', N'Paracetamol, Phenylephrine HCl, Chlorpheniramine maleate', N'Viên nén dài', N'Điều trị các triệu chứng cảm lạnh, nghẹt mũi, sổ mũi, sốt và đau đầu.', N'Quá mẫn với thành phần thuốc, cao huyết áp nặng, bệnh mạch vành.', NULL, NULL, 0, N'Nhà thuốc Pharmacity', '2026-03-01', 1),
+(3, N'Acetylcystein 200mg', N'Acetylcystein', N'Thuốc bột sủi bọt', N'Thuốc tiêu chất nhầy trong các bệnh viêm phế quản cấp và mạn tính.', N'Tiền sử loét dạ dày, trẻ em dưới 2 tuổi.', NULL, NULL, 0, N'Nhà thuốc FPT Long Châu', '2026-03-02', 1),
+(4, N'Ventolin Inhaler 100mcg', N'Salbutamol sulfat', N'Hít định liều dạng khí dung', N'Cắt và phòng ngừa cơn co thắt phế quản ở người bệnh hen suyễn.', N'Quá mẫn với Salbutamol, rối loạn nhịp tim nhanh.', NULL, NULL, 1, N'Nhà thuốc Pharmacity', '2026-03-03', 1),
+(5, N'Tiffy Dey', N'Paracetamol, Chlorpheniramine maleate, Phenylephrine HCl', N'Viên nén', N'Giảm nhanh các triệu chứng cảm cúm, sổ mũi, nghẹt mũi, đau đầu.', N'Quá mẫn với thành phần, suy gan thận nặng, cao huyết áp.', NULL, NULL, 0, N'Nhà thuốc Pharmacity', '2026-03-04', 1),
+(6, N'Cloramphenicol / Alpha Choay', N'Chymotrypsin / Trypsin', N'Viên nén ngậm', N'Kháng viêm giảm phù nề dạng men trong các bệnh viêm họng, viêm đường hô hấp.', N'Mẫn cảm với hoạt chất, bệnh nhân giảm huyết áp.', NULL, NULL, 0, N'Nhà thuốc FPT Long Châu', '2026-03-04', 1),
+(7, N'Bisolvon 8mg', N'Bromhexin hydroclorid', N'Viên nén', N'Thuốc làm loãng đờm trong các bệnh viêm phế quản cấp và mạn tính.', N'Loét dạ dày tiến triển, phụ nữ có thai 3 tháng đầu.', NULL, NULL, 0, N'Nhà thuốc Pharmacity', '2026-03-04', 1),
+(8, N'Clarinase', N'Loratadine, Pseudoephedrine sulfate', N'Viên nén phóng thích chậm', N'Giảm triệu chứng nghẹt mũi, hắt hơi, sổ mũi trong viêm mũi dị ứng.', N'Trẻ em dưới 12 tuổi, cao huyết áp nặng, mạch nhanh.', NULL, NULL, 1, N'Nhà thuốc FPT Long Châu', '2026-03-04', 1),
+(9, N'Seretide Diskus 50/250mcg', N'Salmeterol / Fluticasone propionate', N'Bột hít định liều', N'Điều trị thường xuyên bệnh hen phế quản và COPD.', N'Quá mẫn cảm với thành phần thuốc, cơn hen cấp tính nặng.', NULL, NULL, 1, N'Nhà thuốc Pharmacity', '2026-03-04', 1),
+(10, N'Augmentin 1g', N'Amoxicillin / Acid Clavulanic', N'Viên nén bao phim', N'Kháng sinh điều trị các nhiễm khuẩn đường hô hấp do vi khuẩn nhạy cảm.', N'Dị ứng với kháng sinh nhóm Penicillin hoặc Cephalosporin.', NULL, NULL, 1, N'Nhà thuốc FPT Long Châu', '2026-03-04', 1),
+(11, N'Medrol 16mg', N'Methylprednisolon', N'Viên nén', N'Kháng viêm mạnh, ức chế miễn dịch trong các đợt cấp hen hoặc viêm phế quản nặng.', N'Nhiễm nấm toàn thân, loét dạ dày tá tràng đang tiến triển.', NULL, NULL, 1, N'Nhà thuốc Pharmacity', '2026-03-04', 1),
+(12, N'Rhinathiol Promethazine', N'Carbocisteine, Promethazine', N'Siro ho', N'Trị ho khan, ho có đờm, viêm đường hô hấp kèm tiết dịch nhầy.', N'Trẻ em dưới 2 tuổi, suy hô hấp.', NULL, NULL, 0, N'Nhà thuốc FPT Long Châu', '2026-03-04', 1);
+
+-- 7. Thêm toàn bộ liên kết Bệnh lý với Thuốc tham khảo (DiseaseMedicines)
+INSERT INTO `dbo`.`DiseaseMedicines` (`DiseaseID`, `MedicineID`, `GhiChu`, `Nguon`, `NgayTruyCap`) VALUES
+-- Cảm cúm (DiseaseID = 1)
+(1, 1, N'Uống 1 viên/lần khi sốt cao trên 38.5 độ C, cách nhau từ 4-6 tiếng. Mua tại FPT Long Châu.', N'FPT Long Châu', '2026-03-01'),
+(1, 2, N'Uống 1 viên x 3 lần/ngày sau khi ăn giúp giảm nghẹt mũi và đau đầu. Mua tại Pharmacity.', N'Pharmacity', '2026-03-01'),
+
+-- Viêm phổi (DiseaseID = 2)
+(2, 1, N'Hạ sốt và giảm đau nhức cơ thể theo chỉ định bác sĩ.', N'FPT Long Châu', '2026-03-02'),
+(2, 3, N'Pha 1 gói với nước uống sau bữa ăn giúp loãng đờm, dễ khạc đờm.', N'FPT Long Châu', '2026-03-02'),
+
+-- Hen suyễn (DiseaseID = 3)
+(4, 4, N'Xịt 1-2 nhát khi có cơn khó thở cấp hoặc dùng theo chỉ định dự phòng của bác sĩ. (Thuốc kê đơn)', N'Pharmacity', '2026-03-03'),
+
+-- Viêm họng cấp (DiseaseID = 4)
+(4, 6, N'Ngậm 1 viên x 4 lần/ngày giúp giảm sưng đau họng. Mua tại FPT Long Châu.', N'FPT Long Châu', '2026-03-04'),
+(4, 1, N'Uống hạ sốt khi sốt trên 38.5 độ C.', N'FPT Long Châu', '2026-03-04'),
+
+-- Viêm phế quản cấp (DiseaseID = 5)
+(5, 7, N'Uống 1 viên x 3 lần/ngày giúp tiêu đờm, dễ khạc nhầy. Mua tại Pharmacity.', N'Pharmacity', '2026-03-04'),
+(5, 12, N'Uống 15ml/lần x 3 lần/ngày giảm ho đờm.', N'FPT Long Châu', '2026-03-04'),
+
+-- Viêm mũi dị ứng (DiseaseID = 6)
+(6, 5, N'Uống 1 viên/lần giúp giảm hắt hơi và sổ mũi nhanh chóng.', N'Pharmacity', '2026-03-04'),
+(6, 8, N'Uống 1 viên/ngày vào buổi sáng giúp kiểm soát dị ứng.', N'FPT Long Châu', '2026-03-04'),
+
+-- Viêm xoang mạn tính (DiseaseID = 7)
+(7, 8, N'Uống 1 viên/ngày chống sung huyết mũi xoang.', N'FPT Long Châu', '2026-03-04'),
+
+-- COPD (DiseaseID = 8)
+(8, 9, N'Hít định liều theo chỉ định cố định hàng ngày của bác sĩ chuyên khoa.', N'Pharmacity', '2026-03-04'),
+
+-- Hen phế quản bội nhiễm (DiseaseID = 9)
+(9, 10, N'Kháng sinh uống theo đơn bác sĩ điều trị bội nhiễm vi khuẩn.', N'FPT Long Châu', '2026-03-04'),
+(9, 11, N'Uống theo đợt ngắn ngày theo chỉ định để kháng viêm cấp.', N'Pharmacity', '2026-03-04'),
+
+-- Lao phổi (DiseaseID = 10)
+(10, 10, N'Phối hợp kháng sinh đặc trị theo phác đồ trực tiếp nghiêm ngặt.', N'Chương trình Chống lao', '2026-03-04'),
+
+-- Áp xe phổi (DiseaseID = 11)
+(11, 10, N'Sử dụng kháng sinh liều cao đường tĩnh mạch/uống theo chỉ định bệnh viện.', N'Bệnh viện Chợ Rẫy', '2026-03-04'),
+
+-- Tràn dịch màng phổi (DiseaseID = 12)
+(12, 1, N'Giảm đau, hạ sốt khi có triệu chứng đi kèm.', N'Bệnh viện Tâm Anh', '2026-03-04'),
+
+-- Viêm thanh quản cấp (DiseaseID = 13)
+(13, 6, N'Ngậm viên kháng viêm giảm phù nề thanh quản.', N'FPT Long Châu', '2026-03-04');
