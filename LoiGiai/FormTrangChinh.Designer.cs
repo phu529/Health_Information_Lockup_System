@@ -189,7 +189,7 @@
             txtSearch.Location = new Point(303, 27);
             txtSearch.Margin = new Padding(3, 4, 3, 4);
             txtSearch.Name = "txtSearch";
-            txtSearch.PlaceholderText = "🔍 Nhập tên triệu chứng";
+            txtSearch.PlaceholderText = "🔍 Nhập tên triệu chứng / tên thuốc";
             txtSearch.SelectedText = "";
             txtSearch.ShadowDecoration.CustomizableEdges = customizableEdges14;
             txtSearch.Size = new Size(434, 50);

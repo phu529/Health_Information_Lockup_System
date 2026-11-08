@@ -18,6 +18,8 @@
             components = new System.ComponentModel.Container();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges11 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges12 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
+            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges3 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges4 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges5 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
@@ -72,9 +74,9 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges44 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges45 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges46 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges1 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
-            Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges2 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             panelSidebar = new Guna.UI2.WinForms.Guna2Panel();
+            guna2Button7 = new Guna.UI2.WinForms.Guna2Button();
+            label7 = new Label();
             btnTaiKhoan = new Guna.UI2.WinForms.Guna2Button();
             btnLichSu = new Guna.UI2.WinForms.Guna2Button();
             btnQuanTri = new Guna.UI2.WinForms.Guna2Button();
@@ -117,8 +119,6 @@
             label5 = new Label();
             guna2Button6 = new Guna.UI2.WinForms.Guna2Button();
             label6 = new Label();
-            guna2Button7 = new Guna.UI2.WinForms.Guna2Button();
-            label7 = new Label();
             panelSidebar.SuspendLayout();
             cardResult1.SuspendLayout();
             panelWarning.SuspendLayout();
@@ -144,6 +144,32 @@
             panelSidebar.ShadowDecoration.CustomizableEdges = customizableEdges12;
             panelSidebar.Size = new Size(274, 903);
             panelSidebar.TabIndex = 0;
+            // 
+            // guna2Button7
+            // 
+            guna2Button7.BorderRadius = 8;
+            guna2Button7.CustomizableEdges = customizableEdges1;
+            guna2Button7.FillColor = Color.Transparent;
+            guna2Button7.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            guna2Button7.ForeColor = Color.LightGray;
+            guna2Button7.Location = new Point(5, 837);
+            guna2Button7.Name = "guna2Button7";
+            guna2Button7.ShadowDecoration.CustomizableEdges = customizableEdges2;
+            guna2Button7.Size = new Size(246, 47);
+            guna2Button7.TabIndex = 6;
+            guna2Button7.Text = "   ⚙️  Quản trị (Admin)";
+            guna2Button7.TextAlign = HorizontalAlignment.Left;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label7.ForeColor = Color.DarkGray;
+            label7.Location = new Point(14, 803);
+            label7.Name = "label7";
+            label7.Size = new Size(163, 20);
+            label7.TabIndex = 7;
+            label7.Text = "QUẢN TRỊ NỘI DUNG";
             // 
             // btnTaiKhoan
             // 
@@ -247,7 +273,7 @@
             txtSearch.Location = new Point(303, 27);
             txtSearch.Margin = new Padding(3, 4, 3, 4);
             txtSearch.Name = "txtSearch";
-            txtSearch.PlaceholderText = "🔍 Nhập tên triệu chứng";
+            txtSearch.PlaceholderText = "🔍 Nhập tên triệu chứng / tên thuốc";
             txtSearch.SelectedText = "";
             txtSearch.ShadowDecoration.CustomizableEdges = customizableEdges16;
             txtSearch.Size = new Size(434, 50);
@@ -712,32 +738,6 @@
             label6.Size = new Size(95, 25);
             label6.TabIndex = 0;
             label6.Text = "Thủy đậu";
-            // 
-            // guna2Button7
-            // 
-            guna2Button7.BorderRadius = 8;
-            guna2Button7.CustomizableEdges = customizableEdges1;
-            guna2Button7.FillColor = Color.Transparent;
-            guna2Button7.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            guna2Button7.ForeColor = Color.LightGray;
-            guna2Button7.Location = new Point(5, 837);
-            guna2Button7.Name = "guna2Button7";
-            guna2Button7.ShadowDecoration.CustomizableEdges = customizableEdges2;
-            guna2Button7.Size = new Size(246, 47);
-            guna2Button7.TabIndex = 6;
-            guna2Button7.Text = "   ⚙️  Quản trị (Admin)";
-            guna2Button7.TextAlign = HorizontalAlignment.Left;
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label7.ForeColor = Color.DarkGray;
-            label7.Location = new Point(14, 803);
-            label7.Name = "label7";
-            label7.Size = new Size(163, 20);
-            label7.TabIndex = 7;
-            label7.Text = "QUẢN TRỊ NỘI DUNG";
             // 
             // FormTrangChinhCoKetQuaTraCuu3
             // 
