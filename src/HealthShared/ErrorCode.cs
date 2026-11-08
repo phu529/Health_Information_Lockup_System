@@ -6,7 +6,9 @@
         BadRequest = 400,
         Unauthorized = 401,
         NotFound = 404,
+        Conflict = 409,
         PayloadTooLarge = 413,
         InternalServerError = 500
+
     }
 }

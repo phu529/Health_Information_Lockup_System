@@ -15,7 +15,7 @@
 
             Application.ThreadException += (sender, args) => HienLoiChung();
             AppDomain.CurrentDomain.UnhandledException += (sender, args) => HienLoiChung();
-
+            HealthClient.Services.AppServices.Auth = new HealthClient.Services.AuthServiceTcp();
             Application.Run(new FrmDangNhap());
         }
 
