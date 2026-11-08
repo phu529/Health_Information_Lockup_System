@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using HealthServer.Network;
 
 namespace HealthServer
 {
@@ -134,8 +135,15 @@ namespace HealthServer
 
             using var shutdown = new CancellationTokenSource();
 
+            // ---- Bước 1.3: lõi TCP đa kết nối (xem Network/ và docs/protocol.md) ----
+            // 1) Bộ định tuyến lệnh: PING có sẵn; LOGIN/REGISTER nối vào bên dưới.
+            //    Thành viên khác thêm lệnh mới bằng router.Register("TÊN_LỆNH", hàm).
             var serverRepository = new UserRepository(new DatabaseHelper());
-            var tcpServer = new AuthTcpServer(new AuthRequestHandler(serverRepository));
+            var router = new RequestRouter();
+            AuthRoutes.Register(router, new AuthRequestHandler(serverRepository));
+
+            // 2) Server TCP cổng 5000: mỗi client một tác vụ riêng, giữ kết nối mở.
+            var tcpServer = new TcpServer(router);
             var tcpTask = tcpServer.StartAsync(shutdown.Token);
 
             _ = Task.Run(StartUdpDiscoveryListener);
