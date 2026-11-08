@@ -5,7 +5,7 @@ Client C# WinForms, Server C# TCP (cổng 5000), CSDL SQL Server.
 ```
 src/HealthShared   Class Library dùng chung
 src/HealthServer   Console - TCP Server
-src/HealthClient   WinForms - giao diện
+src/HealthClient   WinForms - giao diện, người dùng thực hiện thao tác
 docs/              Đặc tả giao thức, sơ đồ
 database/          Script SQL
 ```

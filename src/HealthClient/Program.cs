@@ -1,16 +1,31 @@
-namespace HealthClient;
-
-static class Program
+﻿namespace HealthClient
 {
-    /// <summary>
-    ///  The main entry point for the application.
-    /// </summary>
-    [STAThread]
-    static void Main()
+    internal static class Program
     {
-        // To customize application configuration such as set high DPI settings or default font,
-        // see https://aka.ms/applicationconfiguration.
-        ApplicationConfiguration.Initialize();
-        Application.Run(new Form1());
-    }    
+        [STAThread]
+        private static void Main()
+        {
+            ApplicationConfiguration.Initialize();
+
+            // v40: bang do CPU/RAM (an mac dinh): bam Ctrl+Shift+F9 de bat/tat khi can kiem tra hieu nang.
+            HealthClient.UI.DoHieuNang.KichHoat();
+
+            Application.SetUnhandledExceptionMode(
+                UnhandledExceptionMode.CatchException);
+
+            Application.ThreadException += (sender, args) => HienLoiChung();
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) => HienLoiChung();
+            HealthClient.Services.AppServices.Auth = new HealthClient.Services.AuthServiceTcp();
+            Application.Run(new FrmDangNhap());
+        }
+
+        private static void HienLoiChung()
+        {
+            MessageBox.Show(
+                "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+                "Thông báo",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+        }
+    }
 }
