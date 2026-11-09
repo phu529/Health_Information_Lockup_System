@@ -2,7 +2,7 @@
 
 Tài liệu này ghi trạng thái kiểm chứng, cách chạy lại và các điểm tích hợp của lõi TCP. Đặc tả bản tin đầy đủ nằm tại [`docs/protocol.md`](../protocol.md).
 
-Lần kiểm tra Windows gần nhất: **09/11/2026**. Build Solution thành công với 0 lỗi/12 cảnh báo; sau build, HealthServer chạy trên cổng 5000 và TcpProbe đạt 9/9.
+Lần kiểm tra gần nhất: **09/11/2026**. Visual Studio 2026 báo `Build succeeded` với 0 dự án lỗi và 3 dự án đã up-to-date. Khi khởi chạy thêm HealthServer từ Visual Studio, tiến trình mới dừng vì cổng TCP 5000 đã được một `HealthServer.exe` khác trong cùng thư mục dự án sử dụng (SocketException 10048); tiến trình đang nghe không bị dừng. Ảnh kết quả TcpProbe 9/9 từ lần chạy trước do người dùng cung cấp. Lần chạy mới từ môi trường kiểm tra này cho kết quả **0/9**, cả 9 kịch bản đều timeout khi chờ kết nối/phản hồi trên `127.0.0.1:5000`, mặc dù Windows báo có `HealthServer.exe` của dự án đang nghe cổng này. Cần chạy probe và server trong cùng phiên Windows để xác minh lại; chưa sửa source.
 
 ## Trạng thái theo bảng phân công
 
@@ -11,11 +11,11 @@ Lần kiểm tra Windows gần nhất: **09/11/2026**. Build Solution thành cô
 | JSON UTF-8 một dòng, kết thúc LF; tài liệu đặc tả | Đạt | [`docs/protocol.md`](../protocol.md), `src/HealthShared/LfFraming.cs` |
 | Server bất đồng bộ, một tác vụ cho mỗi client, quản lý phiên đồng thời | Đạt kiểm tra chức năng | `AcceptTcpClientAsync`, `ConcurrentDictionary`, log Server |
 | TcpClientHelper phía Client | Đạt kiểm tra chức năng | `src/HealthClient/Network/TcpClientHelper.cs` |
-| Test #8 phân mảnh và #9 dính gói | Đạt | TcpProbe T3 và T2; ảnh chụp được dùng riêng trong báo cáo giữa kỳ |
-| Build toàn bộ Solution trên Windows | Đạt: 0 lỗi, 12 cảnh báo | Chạy `dotnet build Health_Information_Lockup_System.sln --no-restore`; cảnh báo nullability còn lại trong Shared, Client và Discovery/Heartbeat |
-| Hai client TCP cùng kết nối và gửi/nhận | Đạt bằng TcpProbe | T5: X 50/50, Y 50/50; Server ghi nhận 2 kết nối. Ảnh chụp được dùng riêng trong báo cáo giữa kỳ |
+| Test #8 phân mảnh và #9 dính gói | Đạt theo minh chứng lần chạy trước; cần lặp lại | Ảnh TcpProbe người dùng cung cấp thể hiện T3 (phân mảnh) và T2 (dính gói) PASS; lần chạy mới ghi 0/9 do timeout kết nối/phản hồi |
+| Build toàn bộ Solution trên Windows | Đạt trong Visual Studio | `Build succeeded`: 0 dự án mới build, 0 thất bại, 3 up-to-date. Các project HealthClient và HealthServer cũng build riêng bằng .NET CLI với 0 lỗi |
+| Hai client TCP cùng kết nối và gửi/nhận | Đạt bằng TcpProbe theo minh chứng trước; cần xác minh lại trên máy | T5 trong ảnh TcpProbe: X 50/50, Y 50/50. Ảnh hai cửa sổ HealthClient hiện có chưa thể hiện hai yêu cầu JSON gửi/nhận thành công |
 | Hai cửa sổ HealthClient thật cùng gửi yêu cầu, giao diện không treo | **Chưa xác minh** | Cần chạy trên máy có cấu hình SQL và tài khoản thử; ảnh hiện tại là probe TCP, chưa phải hai cửa sổ GUI |
-| Pull Request để nhóm review | **Chưa mở** | Nhánh riêng là `feature/core-tcp`; đích review dự kiến `feature/gui-auth`, không merge tự động |
+| Pull Request để nhóm review | **Chưa mở tại thời điểm ghi nhận** | Nhánh riêng là `feature/core-tcp`; đích review dự kiến `feature/gui-auth`, không merge tự động |
 
 Vì còn thiếu kiểm chứng hai cửa sổ HealthClient và PR, chưa đánh dấu toàn bộ Bước 1.3 là 100%.
 
@@ -89,7 +89,7 @@ T9 của probe gửi RST rồi xác nhận kết nối mới vẫn được ph�
 3. Mở thêm HealthClient instance thứ hai bằng **Debug > Start New Instance**. Với cả hai cửa sổ, gửi thao tác đăng nhập thử được thành viên phụ trách DB cung cấp. Xác nhận Server nhận cả hai yêu cầu, cả hai giao diện vẫn phản hồi, rồi lưu ảnh có hai cửa sổ và log Server.
 4. Nếu thiếu `appsettings.json`, SQL Server, schema hoặc tài khoản thử, không kết luận kiểm tra GUI đạt. Ghi rõ điều kiện thiếu và để tiêu chí GUI ở trạng thái chưa xác minh.
 
-Visual Studio chưa có trong môi trường kiểm chứng hiện tại. Build solution được chạy bằng .NET CLI trên Windows; chưa xác nhận thao tác khởi chạy nhiều project qua giao diện Visual Studio.
+Visual Studio 2026 đã mở Solution và báo build thành công. Khi thử khởi chạy thêm HealthServer, cửa sổ console báo SocketException 10048 do cổng 5000 đã có tiến trình `HealthServer.exe` cùng dự án sử dụng. Không dừng tiến trình đó vì nó đã tồn tại trước lần khởi chạy này. Cần kiểm tra cửa sổ Server đang chạy, hoặc đóng đúng tiến trình của dự án rồi mới chạy lại một instance; không mở hai Server cùng cổng.
 
 ## Ảnh và log đã có
 
