@@ -1,8 +1,8 @@
-# Bước 1.3 — Core TCP: hướng dẫn chạy và bàn giao
+# Bước 1.3 — Core TCP: hướng dẫn chạy 
 
-Tài liệu này ghi trạng thái kiểm chứng, cách chạy lại và các điểm tích hợp của lõi TCP. Đặc tả bản tin đầy đủ nằm tại [`docs/protocol.md`](../protocol.md).
+File Readme này ghi trạng thái kiểm chứng, cách chạy lại và các điểm tích hợp của lõi TCP. Đặc tả bản tin đầy đủ nằm tại [`docs/protocol.md`](../protocol.md).
 
-Lần kiểm tra gần nhất: **09/11/2026**. Visual Studio 2026 báo `Build succeeded` với 0 dự án lỗi và 3 dự án đã up-to-date. Khi khởi chạy thêm HealthServer từ Visual Studio, tiến trình mới dừng vì cổng TCP 5000 đã được một `HealthServer.exe` khác trong cùng thư mục dự án sử dụng (SocketException 10048); tiến trình đang nghe không bị dừng. Ảnh kết quả TcpProbe 9/9 từ lần chạy trước do người dùng cung cấp. Lần chạy mới từ môi trường kiểm tra này cho kết quả **0/9**, cả 9 kịch bản đều timeout khi chờ kết nối/phản hồi trên `127.0.0.1:5000`, mặc dù Windows báo có `HealthServer.exe` của dự án đang nghe cổng này. Cần chạy probe và server trong cùng phiên Windows để xác minh lại; chưa sửa source.
+Lần kiểm tra gần nhất: **09/11/2026**. VS báo `Build succeeded` với 0 dự án lỗi và 3 dự án đã up-to-date. Khi khởi chạy thêm HealthServer từ Visual Studio, tiến trình mới dừng vì cổng TCP 5000 đã được một `HealthServer.exe` khác trong cùng thư mục dự án sử dụng (SocketException 10048); tiến trình đang nghe không bị dừng. Ảnh kết quả TcpProbe 9/9 từ lần chạy trước do người dùng cung cấp. Lần chạy mới từ môi trường kiểm tra này cho kết quả **0/9**, cả 9 kịch bản đều timeout khi chờ kết nối/phản hồi trên `127.0.0.1:5000`, mặc dù Windows báo có `HealthServer.exe` của dự án đang nghe cổng này. Cần chạy probe và server trong cùng phiên Windows để xác minh lại; chưa sửa source.
 
 ## Trạng thái theo bảng phân công
 
