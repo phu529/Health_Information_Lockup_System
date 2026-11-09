@@ -97,7 +97,7 @@ Visual Studio 2026 đã mở Solution và báo build thành công. Khi thử kh�
 - [`probe-run.log`](probe-run.log): log TcpProbe.
 - [`server-run.log`](server-run.log): log Server từ lần kiểm chứng trước.
 
-Ảnh HealthClient GUI hai cửa sổ chưa có. Khi chụp bổ sung, lưu tại `docs/evidence/healthclient-two-windows.png` và cập nhật trạng thái bảng phía trên sau khi xác nhận yêu cầu gửi/nhận thực sự thành công.
+Ảnh hai cửa sổ HealthClient đã được dùng trong báo cáo Google Docs nhưng chưa lưu trong thư mục `docs/evidence/` của repo. Ảnh hiện có cho thấy cả hai cửa sổ đã mở; cần thêm minh chứng thao tác gửi/nhận và log tương ứng để xác nhận đủ tiêu chí. Khi chụp bổ sung, lưu tại `docs/evidence/healthclient-two-windows.png` rồi cập nhật trạng thái bảng phía trên.
 
 ## Cập nhật trạng thái Git
 
