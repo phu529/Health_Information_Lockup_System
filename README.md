@@ -3,11 +3,11 @@
 Client C# WinForms, Server C# TCP (cổng 5000), CSDL SQL Server.
 
 ```
-src/HealthShared   Class Library dùng chung
-src/HealthServer   Console - TCP Server
-src/HealthClient   WinForms - giao diện, người dùng thực hiện thao tác
-docs/              Đặc tả giao thức, sơ đồ
-database/          Script SQL
+src/HealthShared   Thư viện lớp dùng chung
+src/HealthServer   Máy chủ TCP chạy trên cửa sổ dòng lệnh
+src/HealthClient   Ứng dụng WinForms, giao diện và thao tác của người dùng
+docs/              Tài liệu giao thức và sơ đồ
+database/          Tập lệnh SQL
 ```
 
 Mở file `.sln` bằng Visual Studio (.NET 10), Build Solution phải 0 lỗi.
