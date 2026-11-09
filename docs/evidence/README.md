@@ -28,7 +28,7 @@
 - Server tự ngắt client **im lặng quá 90 giây**.
 - Test T9 chỉ cần PASS; câu log khi ngắt kết nối có thể khác chữ, không sao.
 
-## Các bạn khác cần làm gì
+## Các thành viên khác cần làm gì
 | Ai | Việc |
 |---|---|
 | Trọng Phú (xác thực) | Giữ nguyên tên lệnh `LOGIN`/`REGISTER` và cấu trúc payload; lỗi mạng đừng báo thành "sai mật khẩu". |
