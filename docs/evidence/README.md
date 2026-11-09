@@ -35,5 +35,5 @@
 | Hoàng Anh (tìm kiếm/UDP) | Thêm lệnh mới bằng `router.Register(...)` trong `RequestRouter`; **không mở listener thứ hai ở cổng 5000**. |
 | Bạn phụ trách DB | Gửi script/schema, SQL Server và tài khoản thử qua nhóm; không đưa mật khẩu lên Git. |
 
-## File trong thư mục này
-`probe-run.log`, `server-run.log` (log chạy thử), `healthclient-two-windows.png` (ảnh 2 Client), `tcpprobe-9-9.png` (ảnh 9/9).
+## Minh chứng
+`probe-run.log` và `server-run.log` là log kiểm tra. Ảnh TcpProbe 9/9 và ảnh hai cửa sổ HealthClient chỉ dùng trong báo cáo giữa kỳ, không lưu trong repo.
