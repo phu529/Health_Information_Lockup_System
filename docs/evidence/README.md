@@ -1,6 +1,6 @@
 # Bước 1.3 — Core TCP (Server/Client nói chuyện bằng JSON)
 
-**Trạng thái:** đã đủ tiêu chí kỹ thuật, đang chờ nhóm review PR #3.
+**Trạng thái:** đủ tiêu chí kỹ thuật theo minh chứng hiện có; PR #3 đang ở trạng thái nháp, chưa merge.
 Đặc tả bản tin: [`docs/protocol.md`](../protocol.md)
 
 ## Làm được gì
