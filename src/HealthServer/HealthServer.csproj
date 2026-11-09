@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <!-- Pin transitive Pkcs to a patched 9.0 release (SqlClient 7.1.1 brings 9.0.18). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.22" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
   </ItemGroup>
 
