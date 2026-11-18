@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using HealthShared;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
+using HealthShared.Validation;
 
 namespace HealthServer;
 
@@ -17,13 +18,19 @@ internal sealed class AuthRequestHandler
     public async Task<BaseResponse> LoginAsync(LoginPayload? payload)
     {
         if (payload is null ||
-            string.IsNullOrWhiteSpace(payload.TenDangNhap) ||
-            string.IsNullOrEmpty(payload.MatKhau))
+            InputValidator.KiemTraDangNhap(payload.TenDangNhap, payload.MatKhau).Count > 0)
         {
             return LoginResponse(ErrorCode.BadRequest, "Thiếu tên đăng nhập hoặc mật khẩu.");
         }
 
-        var user = await _users.FindForLoginAsync(payload.TenDangNhap);
+        var user = await _users.FindForLoginAsync(payload.TenDangNhap.Trim());
+
+        if(user?.LockedUntil is { } lockedUntil && lockedUntil > DateTime.UtcNow)
+        {
+            int minutes = (int)Math.Ceiling((lockedUntil - DateTime.UtcNow).TotalMinutes);
+            return LoginResponse(ErrorCode.Locked,
+                $"Tài khoản đang bị khóa, thử lại sau {minutes} phút.");
+        }
 
         if (user is null || !await VerifyAndRecordAsync(user, payload.MatKhau))
         {
@@ -72,32 +79,12 @@ internal sealed class AuthRequestHandler
     var fullName = payload?.HoTen?.Trim();
     var email = payload?.Email?.Trim();
 
-    if (string.IsNullOrWhiteSpace(fullName) ||
-        fullName.Length is < 2 or > 50 ||
-        !fullName.All(c => char.IsLetter(c) || c == ' '))
-    {
-        return RegisterResponse(ErrorCode.BadRequest,
-            "Họ tên cần 2–50 ký tự, gồm chữ cái và khoảng trắng.");
-    }
+    var errors = InputValidator.KiemTraDangKy(
+        fullName, username, password, password, email);
+    if (errors.Count > 0)
+        return RegisterResponse(ErrorCode.BadRequest, string.Join(" ", errors.Values));
 
-    if (username is null || !Regex.IsMatch(username, @"\A[A-Za-z0-9_]{3,20}\z"))
-    {
-        return RegisterResponse(ErrorCode.BadRequest,
-            "Tên đăng nhập cần 3–20 ký tự, gồm chữ không dấu, số hoặc dấu gạch dưới.");
-    }
-
-    if (password is null || password.Length is < 8 or > 64 ||
-        !password.Any(char.IsLetter) || !password.Any(char.IsDigit))
-    {
-        return RegisterResponse(ErrorCode.BadRequest,
-            "Mật khẩu cần 8–64 ký tự, có ít nhất một chữ và một số.");
-    }
-
-    if (!string.IsNullOrEmpty(email) &&
-        (email.Length > 100 || !Regex.IsMatch(email, @"\A[^@\s]+@[^@\s]+\.[^@\s]+\z")))
-    {
-        return RegisterResponse(ErrorCode.BadRequest, "Email phải có dạng ten@mien.com.");
-    }
+    username = username!;
 
     var salt = RandomNumberGenerator.GetBytes(16);
     var hash = Rfc2898DeriveBytes.Pbkdf2(
@@ -135,4 +122,55 @@ private static BaseResponse RegisterResponse(
         Payload = payload
     };
 }
+
+    public async Task<BaseResponse> ForgotPasswordAsync(ForgotPasswordPayload? payload)
+    {
+        var username = payload?.TenDangNhap?.Trim();
+        var email = payload?.Email?.Trim();
+        var newPassword = payload?.MatKhauMoi;
+
+        if (InputValidator.KiemTraQuenMatKhau(username, email, newPassword).Count > 0)
+            return ForgotResponse(ErrorCode.BadRequest, "Thông tin nhập chưa hợp lệ.");
+
+        const string VerifyFailed  = "Thông tin xác minh không đúng.";
+
+        var user = await _users.FindForLoginAsync(username);
+        if(user is null || !user.IsActive)
+            return ForgotResponse(ErrorCode.Unauthorized, VerifyFailed);
+
+        if(user.LockedUntil is { } until && until > DateTime.UtcNow)
+            return ForgotResponse(ErrorCode.Locked, "Tài khoản đang bị khóa, thử lại sau.");
+
+        var profile = await _users.GetProfileAsync(user.UserId);
+        if(profile?.Email is null ||
+            !string.Equals(profile.Email, email, StringComparison.OrdinalIgnoreCase))
+        {
+            return ForgotResponse(ErrorCode.Unauthorized, VerifyFailed);
+        }
+
+        var salt = RandomNumberGenerator.GetBytes(16);
+        var hash = Rfc2898DeriveBytes.Pbkdf2(
+            newPassword, salt, 600_000, HashAlgorithmName.SHA256, 32);
+
+        bool updated = await _users.UpdatePasswordAsync(
+            user.UserId, Convert.ToBase64String(hash), Convert.ToBase64String(salt), 600_000);
+
+        if(!updated)
+        {
+            return ForgotResponse(ErrorCode.InternalServerError, "Không đổi được mật khẩu.");
+        }
+
+        return ForgotResponse(ErrorCode.Success, "Đổi mật khẩu thành công.");
+    }
+
+    private static BaseResponse ForgotResponse(ErrorCode status, string message)
+    {
+        return new BaseResponse
+        {
+            Command = AuthCommands.ForgotPassword,
+            Status = status,
+            Message = message,
+            Payload = ""
+        };
+    }
 }

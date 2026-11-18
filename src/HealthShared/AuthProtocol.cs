@@ -4,6 +4,7 @@ public static class AuthCommands
 {
     public const string Login = "LOGIN";
     public const string Register = "REGISTER";
+    public const string ForgotPassword = "FORGOT_PWD";
 }
 
 public sealed record LoginPayload(
@@ -15,5 +16,10 @@ public sealed record RegisterPayload(
     string MatKhau,
     string HoTen,
     string? Email);
+
+public sealed record ForgotPasswordPayload(
+    string TenDangNhap,
+    string Email,
+    string MatKhauMoi);
 
 public sealed record AuthSuccessPayload(string HoTen);

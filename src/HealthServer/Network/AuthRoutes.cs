@@ -20,6 +20,12 @@ internal static class AuthRoutes
             string.IsNullOrWhiteSpace(request.Payload)
                 ? Task.FromResult(Thieu(request.Command))
                 : handler.RegisterAsync(ProtocolHelper.DeserializeData<RegisterPayload>(request.Payload)));
+
+        router.Register(AuthCommands.ForgotPassword, (session, request, token) =>
+            string.IsNullOrWhiteSpace(request.Payload)
+                ? Task.FromResult(Thieu(request.Command))
+                : handler.ForgotPasswordAsync(
+                    ProtocolHelper.DeserializeData<ForgotPasswordPayload>(request.Payload)));
     }
 
     private static BaseResponse Thieu(string command) =>
