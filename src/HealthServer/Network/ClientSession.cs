@@ -25,6 +25,8 @@ internal sealed class ClientSession : IDisposable
     public EndPoint? DiaChiClient { get; }
     public DateTime ThoiDiemNoiUtc { get; } = DateTime.UtcNow;
 
+    //ID người dùng đã đăng nhập trên phiên này (null nếu chưa đăng nhập)
+    public int? UserId { get; private set; }
     public ClientSession(TcpClient client)
     {
         _client = client;
@@ -32,6 +34,10 @@ internal sealed class ClientSession : IDisposable
         _stream = client.GetStream();
         _reader = new LfFrameReader(_stream);
     }
+
+    public void GanNguoiDung(int userId) => UserId = userId;
+
+    public void DangXuatPhien() => UserId = null;
 
     /// <summary>Đọc một thông điệp. null = client đã đóng kết nối đàng hoàng.</summary>
     public Task<string?> DocAsync(CancellationToken token) => _reader.ReadLineAsync(token);

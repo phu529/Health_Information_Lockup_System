@@ -1,6 +1,8 @@
-﻿using System.Drawing.Imaging;
-using HealthClient.Services;
+﻿using HealthClient.Services;
 using HealthClient.UI;
+using HealthShared;
+using System.Drawing.Imaging;
+using System.Net.Sockets;
 
 namespace HealthClient
 {
@@ -615,7 +617,7 @@ namespace HealthClient
             MoFormDangKy();
         }
 
-        private void lnkQuenMatKhau_LinkClicked(
+        private async void lnkQuenMatKhau_LinkClicked(
             object? sender,
             LinkLabelLinkClickedEventArgs e)
         {

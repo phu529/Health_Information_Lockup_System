@@ -140,10 +140,10 @@ namespace HealthServer
             //    Thành viên khác thêm lệnh mới bằng router.Register("TÊN_LỆNH", hàm).
             var serverRepository = new UserRepository(new DatabaseHelper());
             var router = new RequestRouter();
-            AuthRoutes.Register(router, new AuthRequestHandler(serverRepository));
+            var tcpServer = new TcpServer(router);
+            AuthRoutes.Register(router, new AuthRequestHandler(serverRepository, tcpServer.ThuHoiPhienTheoUser));
 
             // 2) Server TCP cổng 5000: mỗi client một tác vụ riêng, giữ kết nối mở.
-            var tcpServer = new TcpServer(router);
             var tcpTask = tcpServer.StartAsync(shutdown.Token);
 
             _ = Task.Run(StartUdpDiscoveryListener);

@@ -14,7 +14,7 @@ internal static class AuthRoutes
         router.Register(AuthCommands.Login, (session, request, token) =>
             string.IsNullOrWhiteSpace(request.Payload)
                 ? Task.FromResult(Thieu(request.Command))
-                : handler.LoginAsync(ProtocolHelper.DeserializeData<LoginPayload>(request.Payload)));
+                : handler.LoginAsync(ProtocolHelper.DeserializeData<LoginPayload>(request.Payload), session));
 
         router.Register(AuthCommands.Register, (session, request, token) =>
             string.IsNullOrWhiteSpace(request.Payload)

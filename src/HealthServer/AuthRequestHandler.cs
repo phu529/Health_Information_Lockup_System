@@ -1,21 +1,24 @@
-using System.Security.Cryptography;
+using HealthServer.Network;
 using HealthShared;
-using System.Text.RegularExpressions;
-using Microsoft.Data.SqlClient;
 using HealthShared.Validation;
+using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
+using static System.Collections.Specialized.BitVector32;
 
 namespace HealthServer;
 
 internal sealed class AuthRequestHandler
 {
     private readonly UserRepository _users;
-
-    public AuthRequestHandler(UserRepository users)
+    private readonly Action<int>? _thuHoiPhien;
+    public AuthRequestHandler(UserRepository users, Action<int>? thuHoiPhien = null)
     {
         _users = users;
+        _thuHoiPhien = thuHoiPhien;
     }
 
-    public async Task<BaseResponse> LoginAsync(LoginPayload? payload)
+    public async Task<BaseResponse> LoginAsync(LoginPayload? payload, ClientSession? session = null)
     {
         if (payload is null ||
             InputValidator.KiemTraDangNhap(payload.TenDangNhap, payload.MatKhau).Count > 0)
@@ -42,6 +45,12 @@ internal sealed class AuthRequestHandler
         {
             return LoginResponse(ErrorCode.InternalServerError, "Không đọc được hồ sơ.");
         }
+
+        // 1.Thu hồi toàn bộ phiên cũ đang đăng nhập bằng tài khoản này trên các máy khác
+        _thuHoiPhien?.Invoke(user.UserId);
+
+        // Gắn UserId vào phiên hiện tại để sau này có thể thu hồi nếu đổi mật khẩu
+        session?.GanNguoiDung(user.UserId);
 
         return LoginResponse(
             ErrorCode.Success,
@@ -159,6 +168,9 @@ private static BaseResponse RegisterResponse(
         {
             return ForgotResponse(ErrorCode.InternalServerError, "Không đổi được mật khẩu.");
         }
+
+        // Thu hồi toàn bộ phiên đang đăng nhập của tài khoản này
+        _thuHoiPhien?.Invoke(user.UserId);
 
         return ForgotResponse(ErrorCode.Success, "Đổi mật khẩu thành công.");
     }
