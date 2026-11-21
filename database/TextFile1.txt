@@ -1,0 +1,17 @@
+Bảng				Chức năng				
+Users				Quản lý tài khoản, mật khẩu đã băm, vai trò và trạng thái khóa	
+Categories			Phân loại bệnh theo danh mục	
+Symptoms			Lưu danh sách triệu chứng	
+Diseases			Lưu thông tin bệnh, nguyên nhân, phòng ngừa, mức phổ biến và nguồn	Tên bệnh, mô tả, tài liệu tham khảo
+DiseaseSymptoms		Liên kết bệnh với các triệu chứng	
+Medicines			Lưu thông tin thuốc, hoạt chất, chống chỉ định và cảnh báo	
+DiseaseMedicines	Liên kết bệnh với thuốc liên quan để tra cứu	
+HealthProfiles		Lưu hồ sơ sức khỏe của người dùng	
+SearchHistory		Lưu lịch sử tra cứu	Người dùng tìm “đau đầu” vào thời điểm nào
+AuditLogs			Ghi nhật ký hoạt động để kiểm tra, truy vết	Đăng nhập thất bại, sửa thông tin bệnh
+Sessions			Quản lý phiên đăng nhập	Người dùng nào đang có phiên, khi nào hết hạn hoặc bị thu hồi
+
+
+Hai bảng DiseaseSymptoms và DiseaseMedicines là bảng trung gian vì:
+- Một bệnh có nhiều triệu chứng; một triệu chứng có thể xuất hiện ở nhiều bệnh.
+- Một bệnh có thể liên quan đến nhiều thuốc; một thuốc có thể liên quan đến nhiều bệnh.
