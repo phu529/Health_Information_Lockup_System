@@ -37,6 +37,21 @@ internal sealed class TcpServer
     /// <summary>Số client đang nối.</summary>
     public int SoPhienDangNoi => _phien.Count;
 
+    /// <summary>
+    /// Thu hồi (đăng xuất và đóng kết nối) mọi phiên đang đăng nhập của một UserID (dùng khi đổi/đặt lại mật khẩu).
+    /// </summary>
+    public void ThuHoiPhienTheoUser(int userId)
+    {
+        foreach (var phien in _phien.Values)
+        {
+            if (phien.UserId == userId)
+            {
+                phien.DangXuatPhien();
+                phien.Dispose();
+            }
+        }
+    }
+
     /// <summary>Cổng thật đang nghe (hữu ích khi truyền cổng 0 để hệ điều hành tự chọn, dùng trong kiểm thử).</summary>
     public int CongDangNghe { get; private set; }
 

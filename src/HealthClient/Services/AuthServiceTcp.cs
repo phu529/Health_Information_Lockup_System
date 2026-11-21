@@ -29,6 +29,16 @@ public sealed class AuthServiceTcp : IAuthService
             token);
     }
 
+    public Task<KetQuaXacThuc> QuenMatKhauAsync(
+        string tenDangNhap, string email, string matKhauMoi,
+        CancellationToken token = default)
+    {
+        return GuiAsync(
+            AuthCommands.ForgotPassword,
+            new ForgotPasswordPayload(tenDangNhap, email, matKhauMoi),
+            token);
+    }
+
     private static async Task<KetQuaXacThuc> GuiAsync<TPayload>(
         string command, TPayload payload, CancellationToken token)
     {
@@ -52,6 +62,18 @@ public sealed class AuthServiceTcp : IAuthService
                     ThongBao: "Đăng nhập bị từ chối.");
             }
 
+            //sai ten dang nhap hoac email khong khop khi dat lai mat khau
+            if(command == AuthCommands.ForgotPassword &&
+                (response.Status == ErrorCode.Unauthorized ||
+                response.Status == ErrorCode.BadRequest ||
+                response.Status == ErrorCode.NotFound))
+            {
+                return new KetQuaXacThuc(MaKetQua.SaiThongTin,
+                    ThongBao: string.IsNullOrWhiteSpace(response.Message)
+                        ? "Tên đăng nhập hoặc email không khớp."
+                        : response.Message);
+            }
+
             if (response.Status != ErrorCode.Success)
             {
                 var message = string.IsNullOrWhiteSpace(response.Message)
@@ -59,6 +81,16 @@ public sealed class AuthServiceTcp : IAuthService
                     : response.Message;
 
                 return new KetQuaXacThuc(MaKetQua.LoiKhac, ThongBao: message);
+            }
+
+            //lenh quen mat khau chi can status == success, khong can tra ve AuthSuccessPayload
+            if(command == AuthCommands.ForgotPassword)
+            {
+                var okMessage = string.IsNullOrWhiteSpace(response.Message)
+                    ? "Đặt lại mật khẩu thành công."
+                    : response.Message;
+
+                return new KetQuaXacThuc(MaKetQua.ThanhCong, ThongBao: okMessage);
             }
 
             if (string.IsNullOrWhiteSpace(response.Payload))

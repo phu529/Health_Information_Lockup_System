@@ -27,6 +27,10 @@
         Task<KetQuaXacThuc> DangKyAsync(
             string tenDangNhap, string matKhau, string hoTen, string? email,
             CancellationToken token = default);
+
+        Task<KetQuaXacThuc> QuenMatKhauAsync(
+        string tenDangNhap, string email, string matKhauMoi,
+        CancellationToken token = default);
     }
 
     public static class AppServices

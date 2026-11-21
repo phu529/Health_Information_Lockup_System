@@ -44,5 +44,21 @@
             _tk[tenDangNhap] = (matKhau, hoTen);
             return new KetQuaXacThuc(MaKetQua.ThanhCong, hoTen);
         }
+
+        public async Task<KetQuaXacThuc> QuenMatKhauAsync(
+            string tenDangNhap, string email, string matKhauMoi,
+            CancellationToken token = default)
+        {
+            await Task.Delay(DO_TRE_MS, token);
+
+            if (tenDangNhap.Equals("loimang", StringComparison.OrdinalIgnoreCase))
+                return new KetQuaXacThuc(MaKetQua.LoiKetNoi);
+
+            if (!_tk.TryGetValue(tenDangNhap, out var t))
+                return new KetQuaXacThuc(MaKetQua.SaiThongTin, ThongBao: "Tên đăng nhập hoặc email không khớp.");
+
+            _tk[tenDangNhap] = (matKhauMoi, t.HoTen);
+            return new KetQuaXacThuc(MaKetQua.ThanhCong, t.HoTen, "Đặt lại mật khẩu thành công.");
+        }
     }
 }

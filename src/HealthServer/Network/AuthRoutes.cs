@@ -14,12 +14,18 @@ internal static class AuthRoutes
         router.Register(AuthCommands.Login, (session, request, token) =>
             string.IsNullOrWhiteSpace(request.Payload)
                 ? Task.FromResult(Thieu(request.Command))
-                : handler.LoginAsync(ProtocolHelper.DeserializeData<LoginPayload>(request.Payload)));
+                : handler.LoginAsync(ProtocolHelper.DeserializeData<LoginPayload>(request.Payload), session));
 
         router.Register(AuthCommands.Register, (session, request, token) =>
             string.IsNullOrWhiteSpace(request.Payload)
                 ? Task.FromResult(Thieu(request.Command))
                 : handler.RegisterAsync(ProtocolHelper.DeserializeData<RegisterPayload>(request.Payload)));
+
+        router.Register(AuthCommands.ForgotPassword, (session, request, token) =>
+            string.IsNullOrWhiteSpace(request.Payload)
+                ? Task.FromResult(Thieu(request.Command))
+                : handler.ForgotPasswordAsync(
+                    ProtocolHelper.DeserializeData<ForgotPasswordPayload>(request.Payload)));
     }
 
     private static BaseResponse Thieu(string command) =>

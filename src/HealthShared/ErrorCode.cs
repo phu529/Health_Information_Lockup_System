@@ -8,6 +8,7 @@
         NotFound = 404,
         Conflict = 409,
         PayloadTooLarge = 413,
+        Locked = 423,
         InternalServerError = 500
 
     }

@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using System.Data;
 
 namespace HealthServer;
@@ -153,4 +154,25 @@ public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? 
     var result = await command.ExecuteScalarAsync();
     return result is true;
 }
+
+    public async Task<bool> UpdatePasswordAsync(
+        int userId, string passwordHash, string salt, int iterations)
+    {
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+
+        command.CommandText = """
+            UPDATE dbo.Users
+            SET MatKhauBam = @PasswordHash, Salt = @Salt, SoVongLap = @Iterations
+            WHERE UserID = @UserID;
+            """;
+
+        command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+        command.Parameters.Add("@PasswordHash", SqlDbType.NVarChar, 64).Value = passwordHash;
+        command.Parameters.Add("@Salt", SqlDbType.NVarChar, 32).Value = salt;
+        command.Parameters.Add("@Iterations", SqlDbType.Int).Value = iterations;
+
+        await connection.OpenAsync();
+        return await command.ExecuteNonQueryAsync() == 1;
+    }
 }
