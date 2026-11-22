@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using HealthClient.Services;
 
 namespace HealthClient
 {
@@ -15,13 +16,15 @@ namespace HealthClient
         private const string SERVER_IP = "127.0.0.1";
         private const int TCP_PORT = 5000;
 
-        // Các ô giao diện
+        private readonly UserProfileHistoryService _userService = new();
+
         private TextBox txtSearch = null!;
         private Button btnSearch = null!;
         private ListBox lstResults = null!;
         private RichTextBox rtbDetail = null!;
+        private Button btnHoSo = null!;
+        private Button btnLichSu = null!;
 
-        // Lưu danh sách kết quả tra cứu tạm thời
         private List<DiseaseItem> _currentDiseases = new();
 
         public FrmTrangChu()
@@ -37,77 +40,123 @@ namespace HealthClient
                 lblXinChao.Text = $"Xin chào, {hoTen}";
         }
 
-        /// <summary>
-        /// Tạo và cân chỉnh vị trí các ô giao diện tra cứu
-        /// </summary>
         private void InitSearchControls()
         {
-            this.Width = 800;
-            this.Height = 520;
+            this.ClientSize = new Size(780, 520);
 
-            // Ẩn dòng chữ tạm của bước cũ
-            foreach (Control c in this.Controls)
+            if (lblGhiChu != null)
+                lblGhiChu.Visible = false;
+
+            if (lblXinChao != null)
             {
-                if (c is Label lbl && lbl.Text.Contains("Bước 1.4"))
-                {
-                    lbl.Visible = false;
-                }
+                lblXinChao.Location = new Point(28, 92);
+                lblXinChao.Size = new Size(375, 44);
             }
 
-            // Đưa nút Đăng xuất lên góc trên bên phải
+            var btnFont = new Font("Segoe UI", 10F, FontStyle.Bold);
+
+            btnHoSo = new Button
+            {
+                Location = new Point(415, 98),
+                Size = new Size(100, 34),
+                Font = btnFont,
+                Text = "Hồ sơ",
+                UseVisualStyleBackColor = true,
+                Cursor = Cursors.Hand
+            };
+
+            btnLichSu = new Button
+            {
+                Location = new Point(525, 98),
+                Size = new Size(100, 34),
+                Font = btnFont,
+                Text = "Lịch sử",
+                UseVisualStyleBackColor = true,
+                Cursor = Cursors.Hand
+            };
+
             if (btnDangXuat != null)
             {
-                btnDangXuat.Location = new Point(640, 105);
-                btnDangXuat.Size = new Size(100, 32);
+                btnDangXuat.Location = new Point(635, 98);
+                btnDangXuat.Size = new Size(115, 34);
+                btnDangXuat.Font = btnFont;
             }
 
-            // 1. Ô nhập triệu chứng
             txtSearch = new TextBox
             {
-                Location = new Point(30, 160),
-                Size = new Size(260, 27),
-                PlaceholderText = "Nhập triệu chứng (VD: Ho, Sốt, Đau bụng...)"
+                Location = new Point(28, 155),
+                Size = new Size(270, 30),
+                Font = new Font("Segoe UI", 11F),
+                PlaceholderText = "Nhập triệu chứng (VD: ho, sốt...)"
             };
 
-            // 2. Nút Tìm kiếm
             btnSearch = new Button
             {
-                Location = new Point(300, 158),
-                Size = new Size(90, 30),
+                Location = new Point(308, 154),
+                Size = new Size(95, 32),
+                Font = btnFont,
                 Text = "Tìm kiếm",
-                UseVisualStyleBackColor = true
+                UseVisualStyleBackColor = true,
+                Cursor = Cursors.Hand
             };
 
-            // 3. Danh sách bệnh kết quả
             lstResults = new ListBox
             {
-                Location = new Point(30, 200),
-                Size = new Size(360, 200)
+                Location = new Point(28, 198),
+                Size = new Size(375, 210),
+                Font = new Font("Segoe UI", 11F)
             };
 
-            // 4. Khung xem thông tin chi tiết
             rtbDetail = new RichTextBox
             {
-                Location = new Point(400, 200),
-                Size = new Size(340, 200),
+                Location = new Point(415, 198),
+                Size = new Size(335, 210),
+                Font = new Font("Segoe UI", 10.5F),
                 ReadOnly = true
             };
 
+            this.Controls.Add(btnHoSo);
+            this.Controls.Add(btnLichSu);
             this.Controls.Add(txtSearch);
             this.Controls.Add(btnSearch);
             this.Controls.Add(lstResults);
             this.Controls.Add(rtbDetail);
+
+            btnHoSo.BringToFront();
+            btnLichSu.BringToFront();
+            btnDangXuat?.BringToFront();
         }
 
         private void AttachEvents()
         {
             btnSearch.Click += async (s, e) => await PerformSearchAsync();
             lstResults.SelectedIndexChanged += async (s, e) => await LoadDiseaseDetailAsync();
+            btnHoSo.Click += (s, e) => MoFormHoSo();
+            btnLichSu.Click += async (s, e) => await MoFormLichSuAsync();
         }
 
-        /// <summary>
-        /// Gửi lệnh SEARCH lên TCP Server
-        /// </summary>
+        private void MoFormHoSo()
+        {
+            using var frm = new FrmHoSo();
+            frm.ShowDialog(this);
+
+            if (!string.IsNullOrWhiteSpace(frm.HoTenMoi) && lblXinChao != null)
+            {
+                lblXinChao.Text = $"Xin chào, {frm.HoTenMoi}";
+            }
+        }
+
+        private async Task MoFormLichSuAsync()
+        {
+            using var frm = new FrmLichSu();
+            if (frm.ShowDialog(this) == DialogResult.OK &&
+                !string.IsNullOrWhiteSpace(frm.TuKhoaChonLai))
+            {
+                txtSearch.Text = frm.TuKhoaChonLai;
+                await PerformSearchAsync();
+            }
+        }
+
         private async Task PerformSearchAsync()
         {
             string keyword = txtSearch.Text.Trim();
@@ -145,6 +194,11 @@ namespace HealthClient
                     {
                         rtbDetail.Text = "Không tìm thấy kết quả phù hợp.";
                     }
+
+                    if (!string.IsNullOrWhiteSpace(keyword))
+                    {
+                        await _userService.ThemLichSuAsync(keyword, null, _currentDiseases.Count);
+                    }
                 }
             }
             catch (Exception ex)
@@ -153,9 +207,6 @@ namespace HealthClient
             }
         }
 
-        /// <summary>
-        /// Gửi lệnh GET_DETAIL khi click vào 1 bệnh trong ListBox
-        /// </summary>
         private async Task LoadDiseaseDetailAsync()
         {
             int index = lstResults.SelectedIndex;
@@ -184,6 +235,12 @@ namespace HealthClient
                     string treat = data.GetProperty("Treatment").GetString() ?? "";
 
                     rtbDetail.Text = $"=== {name.ToUpper()} ===\n\n📌 Mô tả bệnh:\n{desc}\n\n💊 Hướng điều trị:\n{treat}";
+
+                    string tuKhoaLuu = string.IsNullOrWhiteSpace(txtSearch.Text) ? name : txtSearch.Text.Trim();
+                    if (!string.IsNullOrWhiteSpace(tuKhoaLuu))
+                    {
+                        await _userService.ThemLichSuAsync(tuKhoaLuu, diseaseId, 1);
+                    }
                 }
             }
             catch (Exception ex)
@@ -192,9 +249,6 @@ namespace HealthClient
             }
         }
 
-        /// <summary>
-        /// Kết nối TCP gửi/nhận dữ liệu
-        /// </summary>
         private async Task<string> SendTcpRequestAsync(string jsonPayload)
         {
             try
@@ -202,8 +256,9 @@ namespace HealthClient
                 using TcpClient client = new TcpClient();
                 await client.ConnectAsync(SERVER_IP, TCP_PORT);
                 using NetworkStream stream = client.GetStream();
-                using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+                var utf8NoBom = new UTF8Encoding(false);
+                using StreamReader reader = new StreamReader(stream, utf8NoBom);
+                using StreamWriter writer = new StreamWriter(stream, utf8NoBom) { AutoFlush = true };
 
                 await writer.WriteLineAsync(jsonPayload);
                 return await reader.ReadLineAsync() ?? string.Empty;

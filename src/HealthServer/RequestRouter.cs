@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 
 namespace HealthServer
 {
-    public class RequestRouter
+    public class SearchRequestHandler
     {
         private readonly HealthRepository _repository;
 
-        public RequestRouter(HealthRepository repository)
+        public SearchRequestHandler(HealthRepository repository)
         {
             _repository = repository;
         }

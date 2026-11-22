@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using HealthServer.Network;
+using HealthShared;
 
 namespace HealthServer
 {
@@ -18,7 +19,7 @@ namespace HealthServer
         private const string DISCOVERY_RESPONSE = "HEALTH_SERVER_RESPONSE";
 
         private static HealthRepository _repository = new HealthRepository();
-        private static RequestRouter _router = new RequestRouter(_repository);
+        private static SearchRequestHandler _router = new SearchRequestHandler(_repository);
 
         static async Task Main(string[] args)
         {
@@ -146,7 +147,19 @@ namespace HealthServer
             var serverRepository = new UserRepository(new DatabaseHelper());
             var router = new RequestRouter();
             var tcpServer = new TcpServer(router);
-            AuthRoutes.Register(router, new AuthRequestHandler(serverRepository, tcpServer.ThuHoiPhienTheoUser));
+            UserProfileHistoryRoutes.Register(router, serverRepository);
+
+            var authHandler = new AuthRequestHandler(serverRepository);
+            router.Register(AuthCommands.Login, (s, r, t) =>
+                authHandler.LoginAsync(
+                    string.IsNullOrWhiteSpace(r.Payload) ? null : ProtocolHelper.DeserializeData<LoginPayload>(r.Payload),
+                    s));
+            router.Register(AuthCommands.Register, (s, r, t) =>
+                authHandler.RegisterAsync(
+                    string.IsNullOrWhiteSpace(r.Payload) ? null : ProtocolHelper.DeserializeData<RegisterPayload>(r.Payload)));
+            router.Register(AuthCommands.ForgotPassword, (s, r, t) =>
+                authHandler.ForgotPasswordAsync(
+                    string.IsNullOrWhiteSpace(r.Payload) ? null : ProtocolHelper.DeserializeData<ForgotPasswordPayload>(r.Payload)));
 
             // 2) Server TCP cổng 5000: mỗi client một tác vụ riêng, giữ kết nối mở.
             var tcpTask = tcpServer.StartAsync(shutdown.Token);
