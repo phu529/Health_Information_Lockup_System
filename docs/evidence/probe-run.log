@@ -1,0 +1,16 @@
+=== TCP PROBE -> 127.0.0.1:5000 ===
+
+
+--------------------------------------------------
+PASS  T1  PING cơ bản (nhận PONG, đúng RequestId)  -> PONG
+PASS  T2  #9 Dính gói: 3 yêu cầu trong MỘT lần ghi -> đủ 3 phản hồi, đúng thứ tự  -> A, B, C đúng thứ tự
+PASS  T3  #8 Phân mảnh: 1 yêu cầu gửi từng 3 byte (cắt giữa chữ có dấu) -> ghép đúng  -> 114 byte chia 39 mảnh
+PASS  T4  Dòng trống + kết thúc CRLF được chấp nhận  -> bỏ qua dòng trống, nhận CRLF
+PASS  T5  #2/#22 Hai client gửi đồng thời -> mỗi client nhận đúng phản hồi của mình  -> X 50/50, Y 50/50
+PASS  T6  #21 20 client cùng lúc, mỗi client 20 yêu cầu -> không rớt, không lẫn  -> 20 client x 20 yêu cầu = 400/400
+PASS  T7  Lệnh lạ -> 404; JSON hỏng -> 400; kết nối VẪN dùng tiếp được  -> 404, 400, rồi PING vẫn chạy
+PASS  T8  Dòng > 64 KiB -> Server báo 413 rồi đóng kết nối  -> 413 rồi đóng
+PASS  T9  #14 Rớt đột ngột (RST) rồi nối lại -> Server vẫn nhận client mới  -> client mới vẫn được phục vụ
+
+Tổng: 9/9 đạt.
+Với T9: mở cửa sổ Server, dòng '- ... rời đi: mất kết nối' phải xuất hiện (Server tự dọn phiên).
