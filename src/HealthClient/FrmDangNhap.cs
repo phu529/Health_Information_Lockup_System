@@ -150,8 +150,6 @@ namespace HealthClient
 
         private NutQuayLai? _nutQuayLai;
 
-        // Nut nam o goc tren trai bang thuong hieu (con cua pnlThuongHieu de nen kinh trong suot lay dung hoa tiet).
-        // Toa do / kich thuoc o don vi thiet ke 96 dpi; form tu phong theo DPI cung cac control khac.
         private void TaoNutQuayLai()
         {
             var nut = new NutQuayLai
@@ -166,8 +164,6 @@ namespace HealthClient
             _nutQuayLai = nut;
         }
 
-        // Quay lai man hinh chao: lam nguoc hieu ung mo. Vong tron form thu nho dan ve diem bam, bia chao lo lai.
-        // Xoa mat khau va thong bao loi dang hien; giu ten dang nhap. Khong dung toi logic dang nhap.
         private void QuayVeBia(Point tam)
         {
             if (_bia != null || _dangMoBia || UseWaitCursor)
@@ -185,19 +181,16 @@ namespace HealthClient
             bia.CreateControl();
             _bia = bia;
 
-            // Khung dau tien phai la form nguyen ven (tien do 1), khong duoc nhay qua bia.
             LopChuyenCanh? lop = HoatAnh.DuocPhep ? TaoLopChuyenCanh(bia, tam, 1f) : null;
 
             if (lop == null)
             {
-                // Khong co hieu ung (Windows tat, hoac chup anh loi): bia hien ngay.
                 _dangMoBia = false;
                 return;
             }
 
             LopChuyenCanh lopCC = lop;
 
-            // Lop chuyen canh da che kin, tam an bia that de no khong ve ngam trong luc chay.
             bia.Visible = false;
 
             HoatAnh.Chay(
@@ -208,7 +201,6 @@ namespace HealthClient
 
         private void KetThucQuayVe(LopBiaChao bia, LopChuyenCanh lop)
         {
-            // Ve bia that xong roi moi go lop chuyen canh: khung cuoi hai ben giong nhau nen khong nhay.
             bia.Visible = true;
             bia.BringToFront();
             bia.Refresh();
@@ -218,8 +210,6 @@ namespace HealthClient
             _dangMoBia = false;
         }
 
-        // v22: bam chuot TRAI tai diem "tam" thi mot vong tron no dan tu diem do, lo form Dang nhap (0,7 giay, vao nhanh ra em).
-        // Neu khong chup duoc anh (hiem), hoac Windows tat hieu ung: truot bia len nhu v20 / lo ngay.
         private void MoLopBia(Point tam)
         {
             LopBiaChao? bia = _bia;
@@ -249,7 +239,6 @@ namespace HealthClient
                 this, 700,
                 t =>
                 {
-                    // Bia that an di o nhip dau tien (lop chuyen canh da che kin), de ngung ve tiep.
                     if (bia.Visible)
                         bia.Visible = false;
 
@@ -274,7 +263,6 @@ namespace HealthClient
             DatConTroBanDau();
         }
 
-        // Chup bia chao va noi dung form (khong co bia) thanh hai anh, roi dat lop chuyen canh len tren cung.
         private LopChuyenCanh? TaoLopChuyenCanh(LopBiaChao bia, Point tam, float tienDoDau = 0f)
         {
             Bitmap? anhBia = null;
@@ -320,7 +308,6 @@ namespace HealthClient
             }
         }
 
-        // Ve cac control cua form (tru bia) len mot anh, tu duoi len tren theo thu tu chong lop.
         private Bitmap? ChupNoiDungForm(Size kt)
         {
             var anh = new Bitmap(kt.Width, kt.Height, PixelFormat.Format32bppPArgb);
@@ -349,7 +336,6 @@ namespace HealthClient
             }
         }
 
-        // Esc = thoat (chuc nang cua nut Thoat cu trong BT 2.2).
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
@@ -358,7 +344,6 @@ namespace HealthClient
                 return true;
             }
 
-            // v23: Alt + mui ten trai = Quay lai man hinh chao (giong trinh duyet), nhu bam nut "Quay lai".
             if (keyData == (Keys.Alt | Keys.Left) && _bia == null && !_dangMoBia &&
                 _nutQuayLai != null && _nutQuayLai.Enabled)
             {
@@ -369,15 +354,11 @@ namespace HealthClient
                 return true;
             }
 
-            // v21: bia chao dang che thi MOI phim deu bi nuot va KHONG mo bia (chi bam chuot moi mo).
-            // Nuot ca Enter / Tab / chu cai de khong bam Dang nhap ngam, khong go chu vao o nhap dang bi che.
             if (_bia != null)
                 return true;
 
             return base.ProcessCmdKey(ref msg, keyData);
         }
-
-        // ----- Trang thai man hinh: Cho nhap / Dang xu ly / Co loi / Thanh cong -----
 
         private void DatLoi(OnhapLieu o, Label nhan, string noiDung)
         {
@@ -394,8 +375,6 @@ namespace HealthClient
             o.CoLoi = false;
         }
 
-        // v27: dang tick "Nho mat khau" thi quay ve bia / dang xuat roi vao lai van thay mat khau da nho
-        // (doc tu file DPAPI). Chua tick, hoac chua tung dang nhap thanh cong (chua co gi de nho) thi xoa o mat khau.
         private void NapLaiThongTinDaNho()
         {
             string? mk = chkNhoTaiKhoan.Checked ? CauHinhCucBo.DocMatKhauDaNho() : null;
@@ -444,8 +423,6 @@ namespace HealthClient
             UseWaitCursor = dangXuLy;
         }
 
-        // ----- Su kien -----
-
         private async void btnDangNhap_Click(object? sender, EventArgs e)
         {
             XoaLoi();
@@ -453,7 +430,6 @@ namespace HealthClient
             string ten = txtTenDangNhap.Text.Trim();
             string matKhau = txtMatKhau.Text;
 
-            // Kiem tra tai cho truoc khi gui di (luat that nam o server).
             bool thieu = false;
 
             if (ten.Length == 0)
@@ -494,7 +470,6 @@ namespace HealthClient
                         break;
 
                     case MaKetQua.SaiThongTin:
-                        // Cung mot thong bao cho "khong ton tai" va "sai mat khau".
                         XoaONhap(txtMatKhau);
                         DatLoi(txtMatKhau, lblLoiMatKhau,
                             "Tên đăng nhập hoặc mật khẩu không đúng.");
@@ -539,14 +514,12 @@ namespace HealthClient
             }
         }
 
-        // Bam tab "Dang ky" tren thanh tab: mo form Dang ky (tab Dang nhap la tab dang chon nen khong lam gi).
         private void thanhTab_TabBam(object? sender, int chiSo)
         {
             if (chiSo == 1)
                 MoFormDangKy();
         }
 
-        // ----- Chuc nang mo rong (ngoai pham vi mon hoc): chi thong bao, chua co logic that -----
         private void btnVssId_Click(object? sender, EventArgs e)
         {
             ThongBaoMoRong(
@@ -572,7 +545,6 @@ namespace HealthClient
                 MessageBoxIcon.Information);
         }
 
-        // ----- The ghi chu ten dang nhap (bam bieu tuong i), tao khi can de form mo nhanh -----
         private TheGhiChu? _theGhiChu;
 
         private int Px(int v) => (int)Math.Round(v * DeviceDpi / 96.0);
@@ -617,16 +589,19 @@ namespace HealthClient
             MoFormDangKy();
         }
 
-        private async void lnkQuenMatKhau_LinkClicked(
+        private void lnkQuenMatKhau_LinkClicked(
             object? sender,
             LinkLabelLinkClickedEventArgs e)
         {
-            // TODO Buoc 4.3: noi luong FORGOT_PWD qua TCP.
-            MessageBox.Show(
-                "Chức năng khôi phục mật khẩu đang được hoàn thiện.",
-                "Thông báo",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+            AnTheGhiChu();
+            XoaLoi();
+
+            using var frm = new FrmQuenMatKhau();
+            if (frm.ShowDialog(this) == DialogResult.OK && frm.DaDoiMatKhauThanhCong)
+            {
+                XoaONhap(txtMatKhau);
+                txtMatKhau.DatConTro();
+            }
         }
 
         private void MoFormDangKy()
@@ -637,8 +612,6 @@ namespace HealthClient
 
             try
             {
-                // v25: chup form Dang nhap hien tai de form Dang ky lam hieu ung chuyen trang tu anh nay.
-                // Khong Hide(): form Dang ky phu kin dung len tren cung vi tri, khong bi nhay man hinh.
                 AnTheGhiChu();
 
                 if (HoatAnh.DuocPhep && _bia == null)
@@ -661,7 +634,6 @@ namespace HealthClient
 
                 if (tenVuaDangKy != null)
                 {
-                    // Dang ky xong: dien san ten, dua con tro vao o mat khau.
                     txtTenDangNhap.Text = tenVuaDangKy;
                     XoaONhap(txtMatKhau);
                     txtMatKhau.DatConTro();
@@ -672,7 +644,6 @@ namespace HealthClient
                 }
             }
 
-            // v23: nguoi dung bam "Quay lai" tren form Dang ky -> ve thang man hinh chao.
             if (diemVeBia is Point diem)
                 QuayVeBia(PointToClient(diem));
         }

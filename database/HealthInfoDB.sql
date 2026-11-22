@@ -489,3 +489,102 @@ BEGIN CATCH
     THROW;
 END CATCH;
 GO
+
+
+USE HealthInfoDB;
+GO
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+
+IF DB_NAME() <> N'HealthInfoDB'
+BEGIN
+    RAISERROR(N'Sai CSDL. Dừng để tránh chạy nhầm nơi.', 16, 1);
+    RETURN;
+END;
+
+-- 1. Chuẩn hóa email hiện có (bỏ khoảng trắng đầu/cuối + chuyển chữ thường)
+UPDATE dbo.Users
+SET Email = LOWER(LTRIM(RTRIM(Email)))
+WHERE Email IS NOT NULL;
+
+-- Kiểm tra an toàn: chặn migration nếu còn tài khoản chưa có email
+IF EXISTS (
+    SELECT 1
+    FROM dbo.Users
+    WHERE Email IS NULL OR LTRIM(RTRIM(Email)) = N''
+)
+BEGIN
+    RAISERROR(N'Vẫn còn user có Email NULL hoặc rỗng. Hãy bổ sung/xóa trước khi siết NOT NULL.', 16, 1);
+    RETURN;
+END;
+
+-- 2. Gỡ index UX_Users_Email -> sửa cột -> tạo lại UX_Users_Email bỏ lọc IS NOT NULL
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'UX_Users_Email'
+      AND object_id = OBJECT_ID(N'dbo.Users')
+)
+BEGIN
+    DROP INDEX UX_Users_Email ON dbo.Users;
+END;
+
+ALTER TABLE dbo.Users
+ALTER COLUMN Email NVARCHAR(100) NOT NULL;
+
+CREATE UNIQUE NONCLUSTERED INDEX UX_Users_Email
+    ON dbo.Users (Email);
+
+-- 3. Tạo bảng dbo.PasswordResetRequests (đồng bộ kiểu datetime2(3) với HealthInfoDB)
+IF OBJECT_ID(N'dbo.PasswordResetRequests', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.PasswordResetRequests (
+        RequestID           BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        UserID              INT NOT NULL,
+        OtpHash             VARBINARY(32) NOT NULL,          -- Băm SHA-256 của mã OTP 6 số
+        OtpExpiresAt        DATETIME2(3) NOT NULL,           -- Hạn 15 phút
+        FailedAttempts      INT NOT NULL CONSTRAINT DF_PwdReset_FailedAttempts DEFAULT (0), -- Tối đa 5 lần sai
+        ResetTokenHash      VARBINARY(32) NULL,              -- Băm SHA-256 của resetToken
+        ResetTokenExpiresAt DATETIME2(3) NULL,               -- Hạn 10 phút
+        UsedAt              DATETIME2(3) NULL,               -- Thời điểm đã dùng (1 lần)
+        RevokedAt           DATETIME2(3) NULL,               -- Thời điểm hủy/đóng yêu cầu
+        CreatedAt           DATETIME2(3) NOT NULL CONSTRAINT DF_PwdReset_CreatedAt DEFAULT (SYSUTCDATETIME()),
+
+        CONSTRAINT FK_PasswordResetRequests_Users
+            FOREIGN KEY (UserID) REFERENCES dbo.Users(UserID),
+        CONSTRAINT CK_PwdReset_FailedAttempts
+            CHECK (FailedAttempts >= 0 AND FailedAttempts <= 5)
+    );
+END;
+
+-- 4. Tạo 2 index cho dbo.PasswordResetRequests
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'UQ_PwdReset_User_DangMo'
+      AND object_id = OBJECT_ID(N'dbo.PasswordResetRequests')
+)
+BEGIN
+    CREATE UNIQUE NONCLUSTERED INDEX UQ_PwdReset_User_DangMo
+        ON dbo.PasswordResetRequests (UserID)
+        WHERE UsedAt IS NULL AND RevokedAt IS NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_PwdReset_TokenHash'
+      AND object_id = OBJECT_ID(N'dbo.PasswordResetRequests')
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_PwdReset_TokenHash
+        ON dbo.PasswordResetRequests (ResetTokenHash)
+        WHERE ResetTokenHash IS NOT NULL;
+END;
+
+-- ============================================================================
+-- 5. Câu SQL dọn dữ liệu cũ (> 7 ngày) gọi lúc Server khởi động
+-- ============================================================================
+DELETE FROM dbo.PasswordResetRequests
+WHERE CreatedAt < DATEADD(DAY, -7, SYSUTCDATETIME());
