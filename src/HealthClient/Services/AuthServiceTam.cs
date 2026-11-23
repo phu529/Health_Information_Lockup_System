@@ -1,19 +1,20 @@
-﻿namespace HealthClient.Services
+namespace HealthClient.Services
 {
     /// <summary>
-    /// TAM THOI, chi de thu giao dien khi chua co server (xoa o Buoc 1.3).
-    /// Tai khoan co san: demo / demo1234.
-    /// Ten "loimang" luon tra ve LoiKetNoi de thu trang thai co loi mang.
+    /// TAM THOI, chi de thu giao dien khi chua co server.
+    /// Tai khoan co san: demo / demo1234. OTP gia lap: 123456.
     /// </summary>
     public sealed class AuthServiceTam : IAuthService
     {
-        private const int DO_TRE_MS = 700; // gia lap cho mang, de thay trang thai "Dang gui"
+        private const int DO_TRE_MS = 700;
 
         private readonly Dictionary<string, (string MatKhau, string HoTen)> _tk =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["demo"] = ("demo1234", "Người dùng thử")
             };
+
+        private int _mockOtpFailures;
 
         public async Task<KetQuaXacThuc> DangNhapAsync(
             string tenDangNhap, string matKhau, CancellationToken token = default)
@@ -59,6 +60,55 @@
 
             _tk[tenDangNhap] = (matKhauMoi, t.HoTen);
             return new KetQuaXacThuc(MaKetQua.ThanhCong, t.HoTen, "Đặt lại mật khẩu thành công.");
+        }
+
+        public async Task<KetQuaXacThuc> GuiOtpQuenMatKhauAsync(string email, string? tenDangNhap = null, CancellationToken token = default)
+        {
+            await Task.Delay(DO_TRE_MS, token);
+
+            if (email.StartsWith("loimang", StringComparison.OrdinalIgnoreCase))
+                return new KetQuaXacThuc(MaKetQua.LoiKetNoi, ThongBao: "Không kết nối được với Server.");
+
+            _mockOtpFailures = 0;
+            return new KetQuaXacThuc(MaKetQua.ThanhCong,
+                ThongBao: "Nếu email tồn tại và đang hoạt động, mã OTP 6 số đã được gửi (mã thử: 123456).");
+        }
+
+        public async Task<KetQuaXacThuc> XacThucOtpQuenMatKhauAsync(
+            string email, string otpCode, CancellationToken token = default)
+        {
+            await Task.Delay(DO_TRE_MS, token);
+
+            if (email.StartsWith("loimang", StringComparison.OrdinalIgnoreCase))
+                return new KetQuaXacThuc(MaKetQua.LoiKetNoi, ThongBao: "Không kết nối được với Server.");
+
+            if (_mockOtpFailures >= 5)
+                return new KetQuaXacThuc(MaKetQua.LoiKhac, ThongBao: "Bạn đã nhập sai OTP quá 5 lần. Vui lòng yêu cầu mã mới.");
+
+            if (otpCode.Trim() != "123456")
+            {
+                _mockOtpFailures++;
+                return new KetQuaXacThuc(MaKetQua.SaiThongTin,
+                    ThongBao: $"Mã OTP không đúng. Còn {5 - _mockOtpFailures} lần thử.");
+            }
+
+            return new KetQuaXacThuc(MaKetQua.ThanhCong,
+                ThongBao: "Xác thực OTP thành công.",
+                ResetToken: "MOCK_RESET_TOKEN");
+        }
+
+        public async Task<KetQuaXacThuc> DatLaiMatKhauBangTokenAsync(
+            string resetToken, string matKhauMoi, CancellationToken token = default)
+        {
+            await Task.Delay(DO_TRE_MS, token);
+
+            if (resetToken != "MOCK_RESET_TOKEN")
+                return new KetQuaXacThuc(MaKetQua.SaiThongTin, ThongBao: "Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
+
+            if (_tk.TryGetValue("demo", out var t))
+                _tk["demo"] = (matKhauMoi, t.HoTen);
+
+            return new KetQuaXacThuc(MaKetQua.ThanhCong, ThongBao: "Đặt lại mật khẩu thành công.");
         }
     }
 }

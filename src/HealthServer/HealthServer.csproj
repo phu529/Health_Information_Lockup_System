@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 		<None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+		<None Update="Assets\email_banner.png" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
   <PropertyGroup>

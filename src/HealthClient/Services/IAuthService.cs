@@ -1,4 +1,4 @@
-﻿namespace HealthClient.Services
+namespace HealthClient.Services
 {
     public enum MaKetQua
     {
@@ -12,11 +12,11 @@
     public sealed record KetQuaXacThuc(
         MaKetQua Ma,
         string? HoTen = null,
-        string? ThongBao = null);
+        string? ThongBao = null,
+        string? ResetToken = null);
 
     /// <summary>
     /// Cua ngo giua giao dien va tang mang. Form chi biet interface nay.
-    /// Hien dung AuthServiceTam; sau Buoc 1.3 / 4.3 se thay bang ban gui JSON qua TCP.
     /// </summary>
     public interface IAuthService
     {
@@ -29,8 +29,21 @@
             CancellationToken token = default);
 
         Task<KetQuaXacThuc> QuenMatKhauAsync(
-        string tenDangNhap, string email, string matKhauMoi,
-        CancellationToken token = default);
+            string tenDangNhap, string email, string matKhauMoi,
+            CancellationToken token = default);
+
+        Task<KetQuaXacThuc> GuiOtpQuenMatKhauAsync(
+            string email,
+            string? tenDangNhap = null,
+            CancellationToken token = default);
+
+        Task<KetQuaXacThuc> XacThucOtpQuenMatKhauAsync(
+            string email, string otpCode,
+            CancellationToken token = default);
+
+        Task<KetQuaXacThuc> DatLaiMatKhauBangTokenAsync(
+            string resetToken, string matKhauMoi,
+            CancellationToken token = default);
     }
 
     public static class AppServices
