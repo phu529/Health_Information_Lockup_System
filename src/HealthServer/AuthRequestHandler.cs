@@ -64,12 +64,7 @@ internal sealed class AuthRequestHandler
 
     private async Task<bool> VerifyAndRecordAsync(LoginUser user, string password)
     {
-        var salt = Convert.FromBase64String(user.Salt);
-        var storedHash = Convert.FromBase64String(user.PasswordHash);
-        var enteredHash = Rfc2898DeriveBytes.Pbkdf2(
-            password, salt, user.Iterations, HashAlgorithmName.SHA256, 32);
-
-        bool matches = CryptographicOperations.FixedTimeEquals(enteredHash, storedHash);
+        bool matches = MatKhau.KiemTra(password, user.Salt, user.PasswordHash, user.Iterations);
         return await _users.RecordLoginResultAsync(user.UserId, matches);
     }
 
@@ -102,17 +97,15 @@ internal sealed class AuthRequestHandler
         password = password!;
         email = email!;
 
-        var salt = RandomNumberGenerator.GetBytes(16);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(
-            password, salt, 600_000, HashAlgorithmName.SHA256, 32);
+        var (saltBase64, hashBase64) = MatKhau.Tao(password!);
 
         try
         {
             await _users.CreateUserAsync(
-                username,
-                Convert.ToBase64String(hash),
-                Convert.ToBase64String(salt),
-                fullName,
+                username!,
+                hashBase64,
+                saltBase64,
+                fullName!,
                 email);
         }
         catch (ArgumentException ex)
@@ -143,7 +136,7 @@ internal sealed class AuthRequestHandler
         };
     }
 
-    public async Task<BaseResponse> RequestPasswordResetOtpAsync(RequestPasswordResetOtpPayload? payload)
+    public async Task<BaseResponse> RequestPasswordResetOtpAsync(RequestPasswordResetOtpPayload? payload, ClientSession? session = null)
     {
         if (_passwordReset is null)
             return Response(AuthCommands.RequestPasswordResetOtp, ErrorCode.InternalServerError, "Dịch vụ quên mật khẩu chưa được cấu hình.");
@@ -152,12 +145,13 @@ internal sealed class AuthRequestHandler
         if (errors.Count > 0)
             return Response(AuthCommands.RequestPasswordResetOtp, ErrorCode.BadRequest, string.Join(" ", errors.Values));
 
-        var reqResult = await _passwordReset.RequestResetOtpAsync(payload!.Email.Trim(), payload.TenDangNhap);
+        string? clientIp = session?.DiaChiClient?.ToString();
+        var reqResult = await _passwordReset.RequestResetOtpAsync(payload!.Email.Trim(), payload.TenDangNhap, clientIp);
         if (!reqResult.Success)
         {
             return Response(
                 AuthCommands.RequestPasswordResetOtp,
-                ErrorCode.Unauthorized,
+                reqResult.RateLimited ? ErrorCode.Locked : ErrorCode.Unauthorized,
                 reqResult.Message);
         }
 
@@ -204,20 +198,29 @@ internal sealed class AuthRequestHandler
         };
     }
 
-    public async Task<BaseResponse> ResetPasswordWithTokenAsync(ResetPasswordWithTokenPayload? payload)
+    public async Task<BaseResponse> ResetPasswordWithTokenAsync(ResetPasswordWithTokenPayload? payload, ClientSession? session = null)
     {
         if (_passwordReset is null)
             return Response(AuthCommands.ResetPasswordWithToken, ErrorCode.InternalServerError, "Dịch vụ quên mật khẩu chưa được cấu hình.");
 
-        if (string.IsNullOrWhiteSpace(payload?.ResetToken))
-            return Response(AuthCommands.ResetPasswordWithToken, ErrorCode.BadRequest, "Thiếu mã xác thực đặt lại mật khẩu.");
+        if (InputValidator.KiemTraResetToken(payload?.ResetToken).Count > 0)
+            return Response(AuthCommands.ResetPasswordWithToken, ErrorCode.BadRequest, "Phiên đặt lại mật khẩu không hợp lệ.");
 
-        var pwdErrors = InputValidator.KiemTraDatLaiMatKhau(payload.MatKhauMoi);
+        var pwdErrors = InputValidator.KiemTraDatLaiMatKhau(payload!.MatKhauMoi);
         if (pwdErrors.Count > 0)
             return Response(AuthCommands.ResetPasswordWithToken, ErrorCode.BadRequest, string.Join(" ", pwdErrors.Values));
 
-        int? userId = await _passwordReset.ResetPasswordAsync(payload.ResetToken, payload.MatKhauMoi);
-        if (userId is null)
+        string? clientIp = session?.DiaChiClient?.ToString();
+        var (outcome, userId) = await _passwordReset.ResetPasswordWithCheckAsync(payload.ResetToken, payload.MatKhauMoi, clientIp);
+        if (outcome == ResetPasswordOutcome.SameAsOldPassword)
+        {
+            return Response(
+                AuthCommands.ResetPasswordWithToken,
+                ErrorCode.BadRequest,
+                "Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+        }
+
+        if (outcome != ResetPasswordOutcome.Success || userId is null)
         {
             return Response(
                 AuthCommands.ResetPasswordWithToken,
@@ -258,12 +261,10 @@ internal sealed class AuthRequestHandler
             return ForgotResponse(ErrorCode.Unauthorized, VerifyFailed);
         }
 
-        var salt = RandomNumberGenerator.GetBytes(16);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(
-            newPassword!, salt, 600_000, HashAlgorithmName.SHA256, 32);
+        var (saltBase64, hashBase64) = MatKhau.Tao(newPassword!);
 
         bool updated = await _users.UpdatePasswordAsync(
-            user.UserId, Convert.ToBase64String(hash), Convert.ToBase64String(salt), 600_000);
+            user.UserId, hashBase64, saltBase64, MatKhau.VONG_LAP_MAC_DINH);
 
         if (!updated)
         {

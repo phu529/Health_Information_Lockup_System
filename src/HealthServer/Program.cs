@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -7,19 +6,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using HealthServer.Network;
-using HealthShared;
 
 namespace HealthServer
 {
     internal class Program
     {
         private const int UDP_PORT = 8888;
-        private const int TCP_PORT = 5000;
         private const string DISCOVERY_REQUEST = "DISCOVER_HEALTH_SERVER";
         private const string DISCOVERY_RESPONSE = "HEALTH_SERVER_RESPONSE";
-
-        private static HealthRepository _repository = new HealthRepository();
-        private static SearchRequestHandler _router = new SearchRequestHandler(_repository);
 
         static async Task Main(string[] args)
         {
@@ -63,17 +57,15 @@ namespace HealthServer
                     return;
                 }
 
-                var salt = RandomNumberGenerator.GetBytes(16);
-                var hash = Rfc2898DeriveBytes.Pbkdf2(
-                    password, salt, 600_000, HashAlgorithmName.SHA256, 32);
+                var (saltBase64, hashBase64) = MatKhau.Tao(password);
 
                 var repository = new UserRepository(new DatabaseHelper());
                 var userId = await repository.CreateUserAsync(
                     "test_repo",
-                    Convert.ToBase64String(hash),
-                    Convert.ToBase64String(salt),
+                    hashBase64,
+                    saltBase64,
                     "Tài khoản thử",
-                    email: null);
+                    email: "test_repo@temp.invalid");
 
                 Console.WriteLine($"[DB] Đã tạo test_repo. UserID = {userId}");
                 return;
@@ -93,12 +85,7 @@ namespace HealthServer
                 Console.Write("Nhập mật khẩu thử: ");
                 var password = Console.ReadLine() ?? string.Empty;
 
-                var salt = Convert.FromBase64String(user.Salt);
-                var storedHash = Convert.FromBase64String(user.PasswordHash);
-                var enteredHash = Rfc2898DeriveBytes.Pbkdf2(
-                    password, salt, user.Iterations, HashAlgorithmName.SHA256, 32);
-
-                bool matches = CryptographicOperations.FixedTimeEquals(enteredHash, storedHash);
+                bool matches = MatKhau.KiemTra(password, user.Salt, user.PasswordHash, user.Iterations);
                 bool loginSucceeded = await repository.RecordLoginResultAsync(user.UserId, matches);
 
                 Console.WriteLine(loginSucceeded
@@ -147,12 +134,30 @@ namespace HealthServer
             var dbHelper = new DatabaseHelper();
             var serverRepository = new UserRepository(dbHelper);
             var resetRepository = new PasswordResetRepository(dbHelper);
+            try
+            {
+                int daDon = await resetRepository.CleanupOldRequestsAsync();
+                if (daDon > 0) Console.WriteLine($"[DB] Đã dọn {daDon} yêu cầu OTP cũ hơn 7 ngày.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DB] Bỏ qua dọn OTP cũ khi khởi động: {ex.Message}");
+            }
+
             var emailSender = new SmtpEmailSender();
-            var passwordResetService = new PasswordResetService(serverRepository, resetRepository, emailSender);
+            var mailQueue = new MailQueue();
+            var rateLimiter = new ResetRateLimiter();
+            var mailWorker = new MailWorker(mailQueue, emailSender);
+            var mailTask = mailWorker.RunAsync(shutdown.Token);
+
+            var passwordResetService = new PasswordResetService(
+                serverRepository,
+                resetRepository,
+                emailSender,
+                mailQueue,
+                rateLimiter);
             var router = new RequestRouter();
             var tcpServer = new TcpServer(router);
-            UserProfileHistoryRoutes.Register(router, serverRepository);
-
             AuthRoutes.Register(router, new AuthRequestHandler(
                 serverRepository,
                 tcpServer.ThuHoiPhienTheoUser,
@@ -168,60 +173,7 @@ namespace HealthServer
             Console.ReadLine();
 
             shutdown.Cancel();
-            await tcpTask;
-        }
-
-        private static async Task StartTcpListenerAsync()
-        {
-            TcpListener listener = new TcpListener(IPAddress.Any, TCP_PORT);
-            listener.Start();
-
-            while (true)
-            {
-                try
-                {
-                    TcpClient client = await listener.AcceptTcpClientAsync();
-                    _ = Task.Run(() => HandleClientAsync(client));
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("[TCP Server Error] " + ex.Message);
-                }
-            }
-        }
-
-        private static async Task HandleClientAsync(TcpClient client)
-        {
-            Console.WriteLine($"[TCP] Client connected: {client.Client.RemoteEndPoint}");
-
-            using NetworkStream stream = client.GetStream();
-            using StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-            using StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
-
-            try
-            {
-                string? requestJson;
-                while ((requestJson = await reader.ReadLineAsync()) != null)
-                {
-                    Console.WriteLine($"[TCP Request] {requestJson}");
-
-                    // Điều phối gói tin qua RequestRouter
-                    string responseJson = await _router.ProcessRequestAsync(requestJson);
-
-                    // Trả kết quả JSON lại cho Client
-                    await writer.WriteLineAsync(responseJson);
-                    Console.WriteLine($"[TCP Response] {responseJson}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TCP Client Error] {ex.Message}");
-            }
-            finally
-            {
-                client.Close();
-                Console.WriteLine("[TCP] Client disconnected.");
-            }
+            await Task.WhenAll(tcpTask, mailTask);
         }
 
         private static void StartUdpDiscoveryListener()

@@ -72,8 +72,10 @@ public static class InputValidator
 
         if (email.Length == 0)
             loi[Truong.Email] = "Email không được để trống.";
-        else if (email.Length > EmailMax || !RegexEmail.IsMatch(email))
-            loi[Truong.Email] = "Email phải có dạng ten@mien.com và tối đa 100 ký tự.";
+        else if (email.Length > EmailMax)
+            loi[Truong.Email] = "Email tối đa 100 ký tự.";
+        else if (!RegexEmail.IsMatch(email))
+            loi[Truong.Email] = "Email phải có dạng ten@mien.com.";
 
         return loi;
     }
@@ -127,8 +129,10 @@ public static class InputValidator
 
         if (trimmed.Length == 0)
             loi[Truong.Email] = "Vui lòng nhập email đã đăng ký.";
-        else if (trimmed.Length > EmailMax || !RegexEmail.IsMatch(trimmed))
-            loi[Truong.Email] = "Email phải có dạng ten@mien.com và tối đa 100 ký tự.";
+        else if (trimmed.Length > EmailMax)
+            loi[Truong.Email] = "Email tối đa 100 ký tự.";
+        else if (!RegexEmail.IsMatch(trimmed))
+            loi[Truong.Email] = "Email phải có dạng ten@mien.com.";
 
         return loi;
     }
@@ -155,6 +159,15 @@ public static class InputValidator
                  !matKhauMoi.Any(char.IsLetter) || !matKhauMoi.Any(char.IsDigit))
             loi[Truong.MatKhau] = "Mật khẩu cần 8-64 ký tự, có ít nhất một chữ và một số.";
 
+        return loi;
+    }
+
+    public static Dictionary<string, string> KiemTraResetToken(string? resetToken)
+    {
+        var loi = new Dictionary<string, string>();
+        var trimmed = (resetToken ?? "").Trim();
+        if (trimmed.Length != 64 || !trimmed.All(Uri.IsHexDigit))
+            loi["ResetToken"] = "Phiên đặt lại mật khẩu không hợp lệ.";
         return loi;
     }
 }

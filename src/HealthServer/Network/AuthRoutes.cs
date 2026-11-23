@@ -26,7 +26,7 @@ internal static class AuthRoutes
             string.IsNullOrWhiteSpace(request.Payload)
                 ? Task.FromResult(Thieu(request.Command))
                 : handler.RequestPasswordResetOtpAsync(
-                    ProtocolHelper.DeserializeData<RequestPasswordResetOtpPayload>(request.Payload)));
+                    ProtocolHelper.DeserializeData<RequestPasswordResetOtpPayload>(request.Payload), session));
 
         router.Register(AuthCommands.VerifyPasswordResetOtp, (session, request, token) =>
             string.IsNullOrWhiteSpace(request.Payload)
@@ -38,7 +38,7 @@ internal static class AuthRoutes
             string.IsNullOrWhiteSpace(request.Payload)
                 ? Task.FromResult(Thieu(request.Command))
                 : handler.ResetPasswordWithTokenAsync(
-                    ProtocolHelper.DeserializeData<ResetPasswordWithTokenPayload>(request.Payload)));
+                    ProtocolHelper.DeserializeData<ResetPasswordWithTokenPayload>(request.Payload), session));
     }
 
     private static BaseResponse Thieu(string command) =>

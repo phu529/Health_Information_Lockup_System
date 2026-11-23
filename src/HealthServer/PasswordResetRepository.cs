@@ -205,7 +205,8 @@ internal sealed class PasswordResetRepository
         byte[] resetTokenHash,
         string newPasswordHash,
         string newSalt,
-        int iterations)
+        int iterations,
+        string? clientIp = null)
     {
         if (resetTokenHash.Length != 32)
             throw new ArgumentException("ResetTokenHash phải dài đúng 32 bytes.", nameof(resetTokenHash));
@@ -266,6 +267,21 @@ internal sealed class PasswordResetRepository
                 }
             }
 
+            using (var auditCmd = connection.CreateCommand())
+            {
+                auditCmd.Transaction = transaction;
+                auditCmd.CommandText = """
+                    INSERT INTO dbo.AuditLogs
+                        (UserID, HanhDong, TenBang, DoiTuongID, ThanhCong, ChiTiet, ClientIP)
+                    VALUES
+                        (@UserID, 'FORGOT_PWD_RESET', 'Users', CAST(@UserID AS NVARCHAR(128)), 1, N'Đặt lại mật khẩu thành công qua OTP email.', @ClientIP);
+                    """;
+                auditCmd.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+                auditCmd.Parameters.Add("@ClientIP", SqlDbType.VarChar, 45).Value =
+                    string.IsNullOrWhiteSpace(clientIp) ? DBNull.Value : clientIp.Trim();
+                await auditCmd.ExecuteNonQueryAsync();
+            }
+
             await transaction.CommitAsync();
             return userId;
         }
@@ -290,5 +306,48 @@ internal sealed class PasswordResetRepository
             """;
         cmd.Parameters.Add("@RequestID", SqlDbType.BigInt).Value = requestId;
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<(int UserId, string PasswordHash, string Salt, int Iterations)?> GetPasswordInfoByResetTokenAsync(
+        byte[] resetTokenHash)
+    {
+        if (resetTokenHash.Length != 32) return null;
+
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT TOP 1 u.UserID, u.MatKhauBam, u.Salt, u.SoVongLap
+            FROM dbo.PasswordResetRequests r
+            INNER JOIN dbo.Users u ON u.UserID = r.UserID
+            WHERE r.ResetTokenHash = @ResetTokenHash
+              AND r.UsedAt IS NULL
+              AND r.RevokedAt IS NULL
+              AND r.ResetTokenExpiresAt > SYSUTCDATETIME()
+              AND u.IsActive = 1;
+            """;
+        command.Parameters.Add("@ResetTokenHash", SqlDbType.VarBinary, 32).Value = resetTokenHash;
+
+        await connection.OpenAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        return (
+            reader.GetInt32(0),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.GetInt32(3));
+    }
+
+    public async Task<int> CleanupOldRequestsAsync()
+    {
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            DELETE FROM dbo.PasswordResetRequests
+            WHERE CreatedAt < DATEADD(DAY, -7, SYSUTCDATETIME());
+            """;
+
+        await connection.OpenAsync();
+        return await command.ExecuteNonQueryAsync();
     }
 }
