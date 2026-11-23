@@ -144,22 +144,19 @@ namespace HealthServer
             // ---- Bước 1.3: lõi TCP đa kết nối (xem Network/ và docs/protocol.md) ----
             // 1) Bộ định tuyến lệnh: PING có sẵn; LOGIN/REGISTER nối vào bên dưới.
             //    Thành viên khác thêm lệnh mới bằng router.Register("TÊN_LỆNH", hàm).
-            var serverRepository = new UserRepository(new DatabaseHelper());
+            var dbHelper = new DatabaseHelper();
+            var serverRepository = new UserRepository(dbHelper);
+            var resetRepository = new PasswordResetRepository(dbHelper);
+            var emailSender = new SmtpEmailSender();
+            var passwordResetService = new PasswordResetService(serverRepository, resetRepository, emailSender);
             var router = new RequestRouter();
             var tcpServer = new TcpServer(router);
             UserProfileHistoryRoutes.Register(router, serverRepository);
 
-            var authHandler = new AuthRequestHandler(serverRepository);
-            router.Register(AuthCommands.Login, (s, r, t) =>
-                authHandler.LoginAsync(
-                    string.IsNullOrWhiteSpace(r.Payload) ? null : ProtocolHelper.DeserializeData<LoginPayload>(r.Payload),
-                    s));
-            router.Register(AuthCommands.Register, (s, r, t) =>
-                authHandler.RegisterAsync(
-                    string.IsNullOrWhiteSpace(r.Payload) ? null : ProtocolHelper.DeserializeData<RegisterPayload>(r.Payload)));
-            router.Register(AuthCommands.ForgotPassword, (s, r, t) =>
-                authHandler.ForgotPasswordAsync(
-                    string.IsNullOrWhiteSpace(r.Payload) ? null : ProtocolHelper.DeserializeData<ForgotPasswordPayload>(r.Payload)));
+            AuthRoutes.Register(router, new AuthRequestHandler(
+                serverRepository,
+                tcpServer.ThuHoiPhienTheoUser,
+                passwordResetService));
 
             // 2) Server TCP cổng 5000: mỗi client một tác vụ riêng, giữ kết nối mở.
             var tcpTask = tcpServer.StartAsync(shutdown.Token);

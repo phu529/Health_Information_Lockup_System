@@ -10,11 +10,13 @@ internal sealed record LoginUser(
     int Iterations,
     bool IsActive,
     DateTime? LockedUntil);
+
 internal sealed record AccountProfile(
     int UserId,
     string Username,
     string FullName,
     string? Email);
+
 internal sealed class UserRepository
 {
     private readonly DatabaseHelper _database;
@@ -22,6 +24,22 @@ internal sealed class UserRepository
     public UserRepository(DatabaseHelper database)
     {
         _database = database;
+    }
+
+    private static string NormalizeAndValidateEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email là bắt buộc.", nameof(email));
+        }
+
+        string normalized = email.Trim().ToLowerInvariant();
+        if (normalized.Length > 100)
+        {
+            throw new ArgumentException("Email tối đa 100 ký tự.", nameof(email));
+        }
+
+        return normalized;
     }
 
     public async Task<LoginUser?> FindForLoginAsync(string username)
@@ -54,62 +72,118 @@ internal sealed class UserRepository
             reader.GetBoolean(4),
             reader.IsDBNull(5) ? null : reader.GetDateTime(5));
     }
+
+    public async Task<bool> EmailExistsAsync(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        string normalized = email.Trim().ToLowerInvariant();
+        if (normalized.Length > 100)
+            return false;
+
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT TOP (1) 1
+            FROM dbo.Users
+            WHERE Email = @Email;
+            """;
+
+        command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = normalized;
+
+        await connection.OpenAsync();
+        return await command.ExecuteScalarAsync() is not null;
+    }
+
+    public async Task<AccountProfile?> FindActiveProfileByEmailAsync(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return null;
+
+        string normalized = email.Trim().ToLowerInvariant();
+        if (normalized.Length > 100)
+            return null;
+
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT UserID, TenDangNhap, HoTen, Email
+            FROM dbo.Users
+            WHERE Email = @Email AND IsActive = 1;
+            """;
+
+        command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = normalized;
+
+        await connection.OpenAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+            return null;
+
+        return new AccountProfile(
+            reader.GetInt32(0),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3));
+    }
+
     public async Task<AccountProfile?> GetProfileAsync(int userId)
-{
-    await using var connection = _database.CreateConnection();
-    using var command = connection.CreateCommand();
-
-    command.CommandText = """
-        SELECT UserID, TenDangNhap, HoTen, Email
-        FROM dbo.Users
-        WHERE UserID = @UserID;
-        """;
-
-    command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
-
-    await connection.OpenAsync();
-    await using var reader = await command.ExecuteReaderAsync();
-
-    if (!await reader.ReadAsync())
-        return null;
-
-    return new AccountProfile(
-        reader.GetInt32(0),
-        reader.GetString(1),
-        reader.GetString(2),
-        reader.IsDBNull(3) ? null : reader.GetString(3));
-}
-public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? email)
-{
-    if (string.IsNullOrWhiteSpace(fullName) || fullName.Length > 100)
     {
-        throw new ArgumentException("Họ tên phải có từ 1 đến 100 ký tự.", nameof(fullName));
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT UserID, TenDangNhap, HoTen, Email
+            FROM dbo.Users
+            WHERE UserID = @UserID;
+            """;
+
+        command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+
+        await connection.OpenAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+            return null;
+
+        return new AccountProfile(
+            reader.GetInt32(0),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3));
     }
 
-    if (email is not null && email.Length > 254)
+    public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? email)
     {
-        throw new ArgumentException("Email tối đa 254 ký tự.", nameof(email));
+        if (string.IsNullOrWhiteSpace(fullName) || fullName.Length > 100)
+        {
+            throw new ArgumentException("Họ tên phải có trên 1 ký tự.", nameof(fullName));
+        }
+
+        string normalizedEmail = NormalizeAndValidateEmail(email);
+
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+
+        command.CommandText = """
+            UPDATE dbo.Users
+            SET HoTen = @FullName, Email = @Email
+            WHERE UserID = @UserID;
+            """;
+
+        command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+        command.Parameters.Add("@FullName", SqlDbType.NVarChar, 100).Value = fullName;
+        command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = normalizedEmail;
+
+        await connection.OpenAsync();
+
+        int affectedRows = await command.ExecuteNonQueryAsync();
+        return affectedRows == 1;
     }
 
-    await using var connection = _database.CreateConnection();
-    using var command = connection.CreateCommand();
-
-    command.CommandText = """
-        UPDATE dbo.Users
-        SET HoTen = @FullName, Email = @Email
-        WHERE UserID = @UserID;
-        """;
-
-    command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
-    command.Parameters.Add("@FullName", SqlDbType.NVarChar, 100).Value = fullName;
-    command.Parameters.Add("@Email", SqlDbType.NVarChar, 254).Value =
-        (object?)email ?? DBNull.Value;
-
-    await connection.OpenAsync();
-
-    int affectedRows = await command.ExecuteNonQueryAsync();
-    return affectedRows == 1;
-}
     public async Task<int> CreateUserAsync(
         string username,
         string passwordHash,
@@ -117,6 +191,8 @@ public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? 
         string fullName,
         string? email)
     {
+        string normalizedEmail = NormalizeAndValidateEmail(email);
+
         await using var connection = _database.CreateConnection();
         using var command = connection.CreateCommand();
 
@@ -130,30 +206,30 @@ public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? 
         command.Parameters.Add("@PasswordHash", SqlDbType.NVarChar, 64).Value = passwordHash;
         command.Parameters.Add("@Salt", SqlDbType.NVarChar, 32).Value = salt;
         command.Parameters.Add("@FullName", SqlDbType.NVarChar, 100).Value = fullName;
-        command.Parameters.Add("@Email", SqlDbType.NVarChar, 254).Value =
-            (object?)email ?? DBNull.Value;
+        command.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = normalizedEmail;
 
         await connection.OpenAsync();
 
         return (int)(await command.ExecuteScalarAsync()
             ?? throw new InvalidOperationException("Không nhận được UserID sau khi đăng ký."));
     }
+
     public async Task<bool> RecordLoginResultAsync(int userId, bool passwordValid)
-{
-    await using var connection = _database.CreateConnection();
-    using var command = connection.CreateCommand();
+    {
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
 
-    command.CommandText = "dbo.usp_RecordLoginResult";
-    command.CommandType = CommandType.StoredProcedure;
+        command.CommandText = "dbo.usp_RecordLoginResult";
+        command.CommandType = CommandType.StoredProcedure;
 
-    command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
-    command.Parameters.Add("@PasswordValid", SqlDbType.Bit).Value = passwordValid;
+        command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+        command.Parameters.Add("@PasswordValid", SqlDbType.Bit).Value = passwordValid;
 
-    await connection.OpenAsync();
+        await connection.OpenAsync();
 
-    var result = await command.ExecuteScalarAsync();
-    return result is true;
-}
+        var result = await command.ExecuteScalarAsync();
+        return result is true;
+    }
 
     public async Task<bool> UpdatePasswordAsync(
         int userId, string passwordHash, string salt, int iterations)
@@ -175,6 +251,21 @@ public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? 
         await connection.OpenAsync();
         return await command.ExecuteNonQueryAsync() == 1;
     }
+
+    public async Task<int> CleanupOldPasswordResetRequestsAsync()
+    {
+        await using var connection = _database.CreateConnection();
+        using var command = connection.CreateCommand();
+
+        command.CommandText = """
+            DELETE FROM dbo.PasswordResetRequests
+            WHERE CreatedAt < DATEADD(DAY, -7, SYSUTCDATETIME());
+            """;
+
+        await connection.OpenAsync();
+        return await command.ExecuteNonQueryAsync();
+    }
+
     public async Task<HealthShared.UserProfilePayload?> GetFullProfileAsync(int userId)
     {
         await using var connection = _database.CreateConnection();
@@ -224,6 +315,8 @@ public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? 
         string? benhNen,
         string? ghiChu)
     {
+        string normalizedEmail = NormalizeAndValidateEmail(email);
+
         await using var connection = _database.CreateConnection();
         await connection.OpenAsync();
         await using var transaction = await connection.BeginTransactionAsync();
@@ -239,8 +332,7 @@ public async Task<bool> UpdateProfileAsync(int userId, string fullName, string? 
 
             userCmd.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
             userCmd.Parameters.Add("@FullName", SqlDbType.NVarChar, 100).Value = fullName;
-            userCmd.Parameters.Add("@Email", SqlDbType.NVarChar, 254).Value =
-                (object?)email ?? DBNull.Value;
+            userCmd.Parameters.Add("@Email", SqlDbType.NVarChar, 100).Value = normalizedEmail;
 
             if (await userCmd.ExecuteNonQueryAsync() != 1)
             {

@@ -16,7 +16,7 @@
             Application.ThreadException += (sender, args) => HienLoiChung();
             AppDomain.CurrentDomain.UnhandledException += (sender, args) => HienLoiChung();
             HealthClient.Services.AppServices.Auth = new HealthClient.Services.AuthServiceTcp();
-            Application.Run(new FrmDangNhap());
+            Application.Run(new HealthClient.UIToiGian.FrmVo());
 
             // Bước 1.3: thoát ứng dụng thì đóng kết nối TCP dùng chung để Server dọn phiên ngay.
             HealthClient.Network.TcpClientHelper.Shared.Dispose();

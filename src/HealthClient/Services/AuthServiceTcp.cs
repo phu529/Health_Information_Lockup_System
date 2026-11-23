@@ -1,4 +1,4 @@
-﻿using System.Net.Sockets;
+using System.Net.Sockets;
 using System.Text.Json;
 using HealthClient.Network;
 using HealthShared;
@@ -6,10 +6,7 @@ using HealthShared;
 namespace HealthClient.Services;
 
 /// <summary>
-/// Đăng nhập / đăng ký qua Server thật (thay AuthServiceTam, Bước 1.3).
-/// Form chỉ biết IAuthService; lớp này đổi kết quả của Server thành MaKetQua cho giao diện.
-/// Việc gửi/nhận thật nằm ở TcpClientHelper.Shared (một kết nối giữ mở, đóng khung LF).
-/// KHÔNG chứa logic băm mật khẩu hay kiểm tra luật (việc của Server / Trọng Phú).
+/// Đăng nhập / đăng ký / quên mật khẩu qua Server thật qua TcpClientHelper.Shared.
 /// </summary>
 public sealed class AuthServiceTcp : IAuthService
 {
@@ -39,6 +36,33 @@ public sealed class AuthServiceTcp : IAuthService
             token);
     }
 
+    public Task<KetQuaXacThuc> GuiOtpQuenMatKhauAsync(
+        string email, string? tenDangNhap = null, CancellationToken token = default)
+    {
+        return GuiAsync(
+            AuthCommands.RequestPasswordResetOtp,
+            new RequestPasswordResetOtpPayload(email, tenDangNhap),
+            token);
+    }
+
+    public Task<KetQuaXacThuc> XacThucOtpQuenMatKhauAsync(
+        string email, string otpCode, CancellationToken token = default)
+    {
+        return GuiAsync(
+            AuthCommands.VerifyPasswordResetOtp,
+            new VerifyPasswordResetOtpPayload(email, otpCode),
+            token);
+    }
+
+    public Task<KetQuaXacThuc> DatLaiMatKhauBangTokenAsync(
+        string resetToken, string matKhauMoi, CancellationToken token = default)
+    {
+        return GuiAsync(
+            AuthCommands.ResetPasswordWithToken,
+            new ResetPasswordWithTokenPayload(resetToken, matKhauMoi),
+            token);
+    }
+
     private static async Task<KetQuaXacThuc> GuiAsync<TPayload>(
         string command, TPayload payload, CancellationToken token)
     {
@@ -53,7 +77,6 @@ public sealed class AuthServiceTcp : IAuthService
                     ThongBao: "Phản hồi từ Server không hợp lệ.");
             }
 
-            // Sai tên hoặc sai mật khẩu dùng chung một thông báo (không lộ tài khoản có tồn tại hay không).
             if (command == AuthCommands.Login &&
                 (response.Status == ErrorCode.Unauthorized ||
                  response.Status == ErrorCode.BadRequest))
@@ -62,15 +85,16 @@ public sealed class AuthServiceTcp : IAuthService
                     ThongBao: "Đăng nhập bị từ chối.");
             }
 
-            //sai ten dang nhap hoac email khong khop khi dat lai mat khau
-            if(command == AuthCommands.ForgotPassword &&
+            if ((command == AuthCommands.ForgotPassword ||
+                 command == AuthCommands.VerifyPasswordResetOtp ||
+                 command == AuthCommands.ResetPasswordWithToken) &&
                 (response.Status == ErrorCode.Unauthorized ||
-                response.Status == ErrorCode.BadRequest ||
-                response.Status == ErrorCode.NotFound))
+                 response.Status == ErrorCode.BadRequest ||
+                 response.Status == ErrorCode.NotFound))
             {
                 return new KetQuaXacThuc(MaKetQua.SaiThongTin,
                     ThongBao: string.IsNullOrWhiteSpace(response.Message)
-                        ? "Tên đăng nhập hoặc email không khớp."
+                        ? "Thông tin xác thực không hợp lệ."
                         : response.Message);
             }
 
@@ -83,14 +107,29 @@ public sealed class AuthServiceTcp : IAuthService
                 return new KetQuaXacThuc(MaKetQua.LoiKhac, ThongBao: message);
             }
 
-            //lenh quen mat khau chi can status == success, khong can tra ve AuthSuccessPayload
-            if(command == AuthCommands.ForgotPassword)
+            if (command == AuthCommands.ForgotPassword ||
+                command == AuthCommands.RequestPasswordResetOtp ||
+                command == AuthCommands.ResetPasswordWithToken)
             {
                 var okMessage = string.IsNullOrWhiteSpace(response.Message)
-                    ? "Đặt lại mật khẩu thành công."
+                    ? "Thao tác thành công."
                     : response.Message;
 
                 return new KetQuaXacThuc(MaKetQua.ThanhCong, ThongBao: okMessage);
+            }
+
+            if (command == AuthCommands.VerifyPasswordResetOtp)
+            {
+                if (string.IsNullOrWhiteSpace(response.Payload))
+                {
+                    return new KetQuaXacThuc(MaKetQua.LoiKhac,
+                        ThongBao: "Phản hồi thiếu ResetToken.");
+                }
+
+                var otpResult = ProtocolHelper.DeserializeData<VerifyPasswordResetOtpResponsePayload>(response.Payload);
+                return otpResult is null || string.IsNullOrWhiteSpace(otpResult.ResetToken)
+                    ? new KetQuaXacThuc(MaKetQua.LoiKhac, ThongBao: "Không đọc được ResetToken.")
+                    : new KetQuaXacThuc(MaKetQua.ThanhCong, ThongBao: response.Message, ResetToken: otpResult.ResetToken);
             }
 
             if (string.IsNullOrWhiteSpace(response.Payload))
@@ -112,7 +151,6 @@ public sealed class AuthServiceTcp : IAuthService
         }
         catch (Exception ex) when (ex is SocketException or IOException)
         {
-            // Lỗi MẠNG, không phải sai mật khẩu: Form báo "không kết nối được", không tính vào lần đăng nhập sai.
             return new KetQuaXacThuc(MaKetQua.LoiKetNoi,
                 ThongBao: "Không kết nối được với Server.");
         }

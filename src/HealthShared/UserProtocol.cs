@@ -1,4 +1,4 @@
-﻿namespace HealthShared;
+namespace HealthShared;
 
 public static class UserCommands
 {
