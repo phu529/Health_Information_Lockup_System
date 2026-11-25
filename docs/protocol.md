@@ -1,7 +1,7 @@
 ﻿# Đặc tả giao thức truyền thông Client <-> Server (cập nhật sau Bước 1.3)
 
 Hệ thống tra cứu triệu chứng và thông tin sức khỏe - Nhóm 5, NT106.
-Bản gốc: Huỳnh Thanh Nguyên (Bước 1.3). Bản này đối chiếu lại với mã nguồn trên nhánh `main` (commit `16fc5cd`) và **thêm các lệnh sẽ làm ở giai đoạn 2-3**.
+Bản gốc: Huỳnh Thanh Nguyên (Bước 1.3). Bản này đối chiếu lại với mã nguồn trên nhánh `main` (commit `7ef50cd`) và **thêm các lệnh sẽ làm ở giai đoạn 2-3**.
 Mã nguồn tương ứng: `src/HealthShared/` (`LfFraming.cs`, `ProtocolConstants.cs`, `ErrorCode.cs`, `AuthProtocol.cs`, `UserProtocol.cs`), `src/HealthServer/Network/`, `src/HealthClient/Network/`.
 
 **Cách đọc cột "Trạng thái" trong tài liệu này**
@@ -92,7 +92,7 @@ Khung (`Command`, `RequestId`, `Status`) cố định nên bộ định tuyến 
 | 403 | Forbidden | Đã đăng nhập nhưng **không đủ quyền** (Test #12) | Kế hoạch: cần thêm vào `ErrorCode` |
 | 429 | TooManyRequests | Gửi báo động 115 quá 1 lần/phút (`RATE_LIMITED`) | Kế hoạch: cần thêm vào `ErrorCode` |
 
-Ghi chú: hiện `ErrorCode` chưa có 403 và 429. Hai mã này do người làm Bước 4.4 và 4.7 thêm vào `HealthShared/ErrorCode.cs`, rồi cập nhật bảng trên.
+Ghi chú: hiện `ErrorCode` trên commit `7ef50cd` chưa có 403 và 429. Hai mã này do NV2 (Hoàng Anh) thêm vào `src/HealthShared/ErrorCode.cs` đầu GĐ2 để NV4 và cả nhóm dùng chung, rồi cập nhật bảng trên.
 
 ## 5. Danh sách lệnh
 
@@ -106,19 +106,15 @@ Ghi chú: hiện `ErrorCode` chưa có 403 và 429. Hai mã này do người là
 | `FORGOT_PWD_REQUEST_OTP` | `{Email, TenDangNhap}` | Bước 1: gửi OTP qua Gmail SMTP | Có trong mã |
 | `FORGOT_PWD_VERIFY_OTP` | `{Email, OtpCode}` | Bước 2: 200 + `{ResetToken}` | Có trong mã |
 | `FORGOT_PWD_RESET` | `{ResetToken, MatKhauMoi}` | Bước 3: đổi mật khẩu trong 1 `SqlTransaction`, ghi `AuditLogs`, thu hồi mọi phiên cũ | Có trong mã |
-| `FORGOT_PWD` | `{TenDangNhap, Email, MatKhauMoi}` | Lệnh một bước cũ, còn đăng ký ở `AuthRoutes` | Có trong mã (nên bỏ sau khi nhóm thống nhất) |
+| `FORGOT_PWD` | `{TenDangNhap, Email, MatKhauMoi}` | Lệnh một bước cũ, còn đăng ký ở `AuthRoutes` | Có trong mã (NV4 xóa/tắt ở `AuthRoutes.cs` L19–23 trước khi bảo vệ để tránh vượt OTP) |
 | `SEARCH`, `GET_DETAIL` | do Bước 2.3 định nghĩa | Danh sách bệnh / chi tiết | Có trong mã, nhưng `TcpServer` xử lý **trước** bộ định tuyến (`TryHandleSearchAsync`), không qua `router.Register` |
-| `GET_PROFILE` (và `PROFILE`) | rỗng | Hồ sơ của phiên đang đăng nhập (`UserProfilePayload`) | **Có mã, chưa đăng ký trên `main`** |
-| `UPDATE_PROFILE` | `UpdateProfilePayload` | 200 | **Có mã, chưa đăng ký trên `main`** |
-| `GET_HISTORY` | `GetHistoryPayload {Limit=50}` | Danh sách `SearchHistoryItemPayload` | **Có mã, chưa đăng ký trên `main`** |
-| `ADD_HISTORY` | `AddHistoryPayload {TuKhoa, DiseaseId?, SoKetQua}` | 200 | **Có mã, chưa đăng ký trên `main`** |
-| `CLEAR_HISTORY` | rỗng | 200 | **Có mã, chưa đăng ký trên `main`** |
+| `GET_PROFILE` (và `PROFILE`) | rỗng | Hồ sơ của phiên đang đăng nhập (`UserProfilePayload`) | Có trong mã |
+| `UPDATE_PROFILE` | `UpdateProfilePayload` | 200 | Có trong mã |
+| `GET_HISTORY` | `GetHistoryPayload {Limit=50}` | Danh sách `SearchHistoryItemPayload` | Có trong mã |
+| `ADD_HISTORY` | `AddHistoryPayload {TuKhoa, DiseaseId?, SoKetQua}` | 200 | Có trong mã |
+| `CLEAR_HISTORY` | rỗng | 200 | Có trong mã |
 
-**Việc cần sửa ngay:** commit `16fc5cd` đã làm mất dòng đăng ký các lệnh hồ sơ và lịch sử khỏi `src/HealthServer/Program.cs`. Thêm lại dòng sau, ngay sau `AuthRoutes.Register(...)`:
-
-```csharp
-UserProfileHistoryRoutes.Register(router, serverRepository);
-```
+**Đã khôi phục trên `main` (`7ef50cd`):** Đã đăng ký lại `UserProfileHistoryRoutes.Register(router, serverRepository);` tại `src/HealthServer/Program.cs` (L165).
 
 Các lệnh hồ sơ và lịch sử đều kiểm `session.UserId`; chưa đăng nhập thì trả 401.
 
@@ -144,6 +140,7 @@ Chữ in nghiêng là DTO chưa tồn tại. Mỗi DTO viết trong `HealthShare
 | Bác sĩ | `DOCTOR_STATUS` | C->S | `{TrangThai: "Ranh" \| "Ban"}`; Server lưu và cập nhật nhãn Rảnh/Bận cho người dùng | Chỉ ContentAdmin (vai bác sĩ); vai khác trả 403 | NV2 (2.6) |
 | Quản trị | `ADMIN_CRUD_*` (ví dụ `ADMIN_CRUD_CREATE`, `_UPDATE`, `_DELETE`) | C->S | `{DoiTuong: Benh \| TrieuChung \| Thuoc \| BacSi \| FAQ, DuLieu}`; mọi lần ghi đều ghi `AuditLogs` (không ghi mật khẩu/token) | ContentAdmin, SystemAdmin; User thường trả 403 | NV4 (4.4) + NV3 (DAL) |
 | Báo lỗi | `UPLOAD_BEGIN`, `UPLOAD_CHUNK`, `UPLOAD_END` | C->S | Xem mục 9 | Đã đăng nhập | NV2 (2.7) |
+| FAQ | `FAQ_LIST` | C->S | `{TuKhoa?}` — tải/lọc danh sách câu hỏi thường gặp từ `SupportFaqRepository` | Mọi người dùng | NV2 (2.7, `RealtimePushRoutes.cs`) |
 
 ## 6. Vòng đời một kết nối
 
@@ -203,8 +200,8 @@ Vì một thông điệp tối đa 64 KiB, tệp ảnh/PDF phải cắt khối:
 ## 10. Bảo mật (hiện trạng và việc còn lại)
 
 - Hiện dữ liệu đi **chưa mã hóa** (TCP trần), kể cả mật khẩu trong `LOGIN`/`REGISTER`. Mật khẩu được băm PBKDF2 khi lưu, nhưng trên mạng LAN vẫn đọc được bằng Wireshark.
-- Bọc TLS bằng `SslStream` là việc của NV4, Bước 4.4: thay `NetworkStream` bằng `SslStream` trong `ClientSession` và `TcpClientHelper`; tầng đóng khung không đổi.
-- Trước khi tạo chứng chỉ, thêm `*.pfx` và `*.key` vào `.gitignore`.
+- Bọc TLS bằng `SslStream` là việc của NV4, Bước 4.4: NV4 bọc `AuthenticateAsServerAsync` trong `src/HealthServer/Network/ClientSession.cs` (merge sau NV2) và bàn giao `AuthenticateAsClientAsync` để NV1 ghép vào `src/HealthClient/Network/TcpClientHelper.cs`; tầng đóng khung không đổi.
+- `*.pfx` và `*.key` đã được chặn sẵn trong `.gitignore` trên nhánh `main` (`7ef50cd`).
 - Server không ghi mật khẩu, OTP, token hoặc `Payload` vào log; chỉ ghi tên loại lỗi.
 - Phân quyền **do Server kiểm tra theo `session`**, không dựa vào việc Client ẩn nút. Thiếu quyền trả 403.
 
@@ -236,8 +233,9 @@ Các lệnh mới gắn với Test Case: `LOGIN` đa phiên (#7), `FORGOT_PWD_*`
 
 ## 13. Việc còn lại để file này đúng 100%
 
-- [ ] Thêm lại `UserProfileHistoryRoutes.Register(...)` vào `Program.cs`.
-- [ ] Thêm `Forbidden = 403` và `TooManyRequests = 429` vào `ErrorCode`.
+- [x] Thêm lại `UserProfileHistoryRoutes.Register(...)` vào `Program.cs` (đã xong ở `7ef50cd`).
+- [ ] NV2 (Hoàng Anh) thêm `Forbidden = 403` và `TooManyRequests = 429` vào `src/HealthShared/ErrorCode.cs` đầu GĐ2 để NV4 và cả nhóm dùng chung.
+- [ ] NV4 xóa/tắt lệnh `FORGOT_PWD` 1 bước cũ ở `src/HealthServer/Network/AuthRoutes.cs` (L19–23) trước khi bảo vệ.
 - [x] Chốt chính sách khi đăng nhập máy thứ 6 (mục 6.1: trả `409 Conflict`, không đá phiên cũ).
 - [ ] Sau khi cài từng lệnh ở mục 5.2, đổi nhãn "Kế hoạch" thành "Có trong mã" và sửa DTO cho đúng.
-- [ ] Đổi tên `src/HealthServer/RequestRouter.cs` thành `SearchRequestHandler.cs` (file đó chứa lớp `SearchRequestHandler`, **không** gộp với `Network/RequestRouter.cs`).
+- [x] Đổi tên `src/HealthServer/RequestRouter.cs` thành `SearchRequestHandler.cs` (đã xong ở `7ef50cd`).
