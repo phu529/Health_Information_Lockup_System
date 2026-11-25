@@ -426,7 +426,7 @@ namespace HealthClient.UIToiGian
             });
             y += this.Px(54);
 
-            const string chuMoDau = "Tập hợp thông tin triệu chứng, bệnh lý phổ biến và thuốc tham khảo trên một giao diện thống nhất — biên soạn từ các nguồn công khai uy tín (WHO, Bộ Y tế, MSD Manual).";
+            const string chuMoDau = "Tập hợp thông tin triệu chứng, bệnh lý phổ biến, thuốc tham khảo và tiện ích khảo sát sức khỏe nhanh trên một giao diện thống nhất — biên soạn từ các nguồn công khai uy tín (WHO, Bộ Y tế, Cục Quản lý Dược, MSD Manual).";
             var lblMoDau = new DoanChuThoang
             {
                 Font = AppTheme.ChuDocMoDau,
@@ -451,13 +451,13 @@ namespace HealthClient.UIToiGian
             {
                 (LucideIconKind.BookOpen, AppTheme.Chinh, AppTheme.ChipXanh, "Bối cảnh & nguồn biên soạn",
                  "• Khắc phục tình trạng thông tin sức khỏe rải rác, thiếu nguồn đối chiếu.\n" +
-                 "• Dữ liệu phân danh mục tập trung, ghi rõ nguồn WHO, Bộ Y tế, MSD Manual.\n" +
+                 "• Dữ liệu phân danh mục tập trung, ghi rõ nguồn WHO, Bộ Y tế, Cục Quản lý Dược, MSD Manual.\n" +
                  "• Ứng dụng học tập phi thương mại, hoàn toàn không quảng cáo."),
 
-                (LucideIconKind.Search, AppTheme.Phu, AppTheme.ChipMint, "Phạm vi tra cứu & mở rộng",
-                 "• Chọn nhiều triệu chứng để gợi ý bệnh lý hoặc tìm trực tiếp tên bệnh, thuốc.\n" +
-                 "• Xem mô tả ngắn, mức độ phổ biến, dấu hiệu cần đi khám và thuốc liên quan.\n" +
-                 "• Lưu lịch sử theo tài khoản; định hướng mở rộng hồ sơ sức khỏe & nhắc tái khám.")
+                (LucideIconKind.Search, AppTheme.Phu, AppTheme.ChipMint, "Phạm vi tra cứu & tiện ích mở rộng",
+                 "• Chọn nhiều triệu chứng kèm thẻ bộ lọc hiển thị trực quan, hoặc tìm theo tên bệnh, thuốc.\n" +
+                 "• Khảo sát sức khỏe nhanh tự chọn trên Trang chủ để nhận gợi ý tham khảo & gửi trước tình trạng cho bác sĩ khi nhắn tin.\n" +
+                 "• Lưu lịch sử, hồ sơ sức khỏe, thẻ QR y tế, quản lý thiết bị đăng nhập & khôi phục mật khẩu OTP.")
             };
 
             int maxNoiDung2 = 0;
@@ -518,10 +518,10 @@ namespace HealthClient.UIToiGian
 
             (LucideIconKind Ic, Color Mau, Color NenIc, string TieuDe, string MoTa)[] nguyenTac =
             {
-                (LucideIconKind.Award, AppTheme.Chinh, AppTheme.ChipXanh, "Minh bạch nguồn", "Ghi rõ nguồn tham khảo công khai (WHO, Bộ Y tế, MSD Manual) ở từng mục dữ liệu."),
-                (LucideIconKind.FileText, AppTheme.Phu, AppTheme.ChipMint, "Trình bày rõ ràng", "Nội dung ngắn gọn, dễ hiểu, có nêu rõ dấu hiệu cần đi khám sớm."),
-                (LucideIconKind.Clock, AppTheme.Chinh, AppTheme.ChipXanh, "Lưu lịch sử tra cứu", "Tự động lưu lịch sử tra cứu riêng theo từng tài khoản để xem lại thuận tiện."),
-                (LucideIconKind.Lock, AppTheme.Phu, AppTheme.ChipMint, "Phân quyền an toàn", "Tách bạch rõ quyền người dùng và quản trị viên nhằm bảo vệ dữ liệu hệ thống.")
+                (LucideIconKind.Award, AppTheme.Chinh, AppTheme.ChipXanh, "Minh bạch nguồn", "Ghi rõ nguồn tham khảo công khai (WHO, Bộ Y tế, Cục Quản lý Dược, MSD Manual) ở từng mục dữ liệu."),
+                (LucideIconKind.FileText, AppTheme.Phu, AppTheme.ChipMint, "Bộ lọc & trình bày rõ ràng", "Hiển thị trực quan từng điều kiện lọc đang áp dụng để gỡ riêng dễ dàng; nêu rõ dấu hiệu cần đi khám."),
+                (LucideIconKind.Clock, AppTheme.Chinh, AppTheme.ChipXanh, "Khảo sát nhanh & lưu lịch sử", "Bảng khảo sát tự chọn không làm phiền, gửi trước tóm tắt cho bác sĩ khi chat và lưu lịch sử riêng."),
+                (LucideIconKind.Lock, AppTheme.Phu, AppTheme.ChipMint, "Bảo mật & phân quyền", "Băm mật khẩu an toàn, khôi phục qua mã OTP email và tách bạch quyền người dùng với quản trị viên.")
             };
 
             int pad4 = this.Px(20);
@@ -714,10 +714,10 @@ namespace HealthClient.UIToiGian
             {
                 ("01", "Đăng ký hoặc Đăng nhập",
                  "Tạo tài khoản bằng họ tên, tên đăng nhập và email hợp lệ, hoặc đăng nhập nếu đã có tài khoản."),
-                ("02", "Nhập triệu chứng hoặc tên thuốc",
-                 "Gõ từ khóa hoặc chọn nhóm triệu chứng để hệ thống tìm kiếm và trả về danh sách phù hợp."),
-                ("03", "Đọc chi tiết và gửi góp ý",
-                 "Xem mô tả bệnh lý, thuốc liên quan, lưu lịch sử hoặc gửi góp ý trực tiếp cho quản trị viên.")
+                ("02", "Tra cứu lọc rõ hoặc Khảo sát nhanh",
+                 "Tìm từ khóa, chọn bộ lọc hiển thị rõ từng điều kiện đang áp dụng hoặc mở bảng khảo sát nhanh tự chọn."),
+                ("03", "Xem gợi ý, nhắn bác sĩ & góp ý",
+                 "Đọc chi tiết bệnh/thuốc, đính kèm tóm tắt khảo sát khi nhắn tin với bác sĩ hoặc gửi góp ý tới quản trị viên.")
             };
 
             int gap = this.Px(18);
@@ -772,7 +772,7 @@ namespace HealthClient.UIToiGian
                 (NhomTaiKhoan, "Tôi có bắt buộc phải tạo tài khoản trước khi sử dụng không?",
                  "Có. Lịch sử tra cứu và hồ sơ sức khỏe được lưu riêng theo từng tài khoản cá nhân nên bạn cần đăng ký và đăng nhập để sử dụng đầy đủ chức năng."),
                 (NhomTaiKhoan, "Nếu quên mật khẩu thì tôi khôi phục bằng cách nào?",
-                 "Tại màn hình Đăng nhập, nhấn vào \"Quên mật khẩu?\". Hệ thống sẽ mở hộp thoại khôi phục qua email đã đăng ký (gửi mã xác nhận 6 số hiệu lực 60 giây → xác minh mã → đặt mật khẩu mới)."),
+                 "Tại màn hình Đăng nhập, nhấn vào \"Quên mật khẩu?\". Bạn nhập đúng Tên đăng nhập và Email đã đăng ký để nhận mã OTP 6 chữ số qua hộp thư Gmail (hiệu lực 15 phút, gửi lại sau 60 giây, có nút Dán mã nhanh), sau đó xác minh mã và đặt mật khẩu mới."),
                 (NhomTaiKhoan, "Tôi có thể yêu cầu xóa tài khoản hoặc xóa lịch sử tra cứu không?",
                  "Có. Bạn có thể xóa lịch sử tra cứu trong trang tài khoản, hoặc gửi yêu cầu xóa dữ liệu tài khoản qua mục Góp ý - Liên hệ quản trị viên sau khi đăng nhập."),
                 (NhomTaiKhoan, "Tại sao khi đăng nhập lại báo \"Không kết nối được tới máy chủ\"?",
@@ -780,8 +780,10 @@ namespace HealthClient.UIToiGian
 
                 (NhomTraCuu, "Làm thế nào để bắt đầu tra cứu triệu chứng hoặc tên thuốc?",
                  "Bạn nhấn nút \"Bắt đầu tra cứu\" hoặc \"Đăng nhập\". Sau khi vào trang chính, bạn có thể nhập từ khóa triệu chứng, bệnh lý hoặc tên thuốc để nhận kết quả phù hợp."),
-                (NhomTraCuu, "Tôi có thể chọn nhiều triệu chứng cùng lúc khi tra cứu không?",
-                 "Có. Bạn có thể chọn nhiều triệu chứng thuộc các nhóm cơ quan (như Hô hấp, Tiêu hóa, Da liễu, Toàn thân...) hoặc tìm trực tiếp theo tên bệnh/thuốc."),
+                (NhomTraCuu, "Tôi có thể chọn nhiều triệu chứng và xem rõ các bộ lọc đang áp dụng không?",
+                 "Có. Bạn có thể chọn nhiều triệu chứng theo nhóm cơ quan (Hô hấp, Tiêu hóa, Da liễu, Toàn thân...). Ngay bên dưới nút Bộ lọc, hệ thống luôn hiển thị rõ từng thẻ điều kiện đang áp dụng kèm dấu ✕ để bạn thấy ngay và gỡ riêng từng điều kiện dễ dàng."),
+                (NhomTraCuu, "Bảng khảo sát sức khỏe nhanh trên Trang chủ hoạt động như thế nào?",
+                 "Khi mới vào Trang chủ, bảng khảo sát không tự bật làm phiền mà đặt gọn ở nút \"Khảo sát nhanh\". Bạn có thể chủ động mở để trả lời vài câu ngắn nhận gợi ý bệnh tham khảo; nếu bạn chọn nhắn tin với bác sĩ, phiếu tóm tắt khảo sát sẽ được gửi trước để bác sĩ nắm tình hình."),
                 (NhomTraCuu, "Dữ liệu bệnh lý và thuốc trong hệ thống lấy từ nguồn nào?",
                  "Nội dung tham khảo được tổng hợp từ các tài liệu y khoa công khai uy tín như WHO, Bộ Y tế Việt Nam và MSD Manual nhằm bảo đảm thông tin rõ ràng, chọn lọc."),
                 (NhomTraCuu, "Ứng dụng có sử dụng được khi không có kết nối mạng không?",

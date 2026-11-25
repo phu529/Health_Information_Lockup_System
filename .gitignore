@@ -26,3 +26,14 @@ project.lock.json
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Chứng chỉ & khóa bí mật TLS (tuyệt đối không đẩy lên GitHub)
+*.pfx
+*.key
+
+# T�i li?u n?i b? nh�m (ch? chia s? ri�ng, kh�ng push l�n GitHub)
+docs/tasks/
+docs/Mo-ta-chuc-nang-bo-sung.docx
+docs/Dac-ta-va-Huong-dan-Trien-khai-Tong-the-NT106-Nhom5.md
+branch-review/
+inputs/

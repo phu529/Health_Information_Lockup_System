@@ -162,6 +162,7 @@ namespace HealthServer
                 serverRepository,
                 tcpServer.ThuHoiPhienTheoUser,
                 passwordResetService));
+            UserProfileHistoryRoutes.Register(router, serverRepository);
 
             // 2) Server TCP cổng 5000: mỗi client một tác vụ riêng, giữ kết nối mở.
             var tcpTask = tcpServer.StartAsync(shutdown.Token);
