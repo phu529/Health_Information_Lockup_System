@@ -108,7 +108,7 @@ Ghi chú: hiện `ErrorCode` trên commit `7ef50cd` chưa có 403 và 429. Hai m
 | `FORGOT_PWD_RESET` | `{ResetToken, MatKhauMoi}` | Bước 3: đổi mật khẩu trong 1 `SqlTransaction`, ghi `AuditLogs`, thu hồi mọi phiên cũ | Có trong mã |
 | `FORGOT_PWD` | `{TenDangNhap, Email, MatKhauMoi}` | Lệnh một bước cũ, còn đăng ký ở `AuthRoutes` | Có trong mã (NV4 xóa/tắt ở `AuthRoutes.cs` L19–23 trước khi bảo vệ để tránh vượt OTP) |
 | `SEARCH`, `GET_DETAIL` | do Bước 2.3 định nghĩa | Danh sách bệnh / chi tiết | Có trong mã, nhưng `TcpServer` xử lý **trước** bộ định tuyến (`TryHandleSearchAsync`), không qua `router.Register` |
-| `GET_PROFILE` (và `PROFILE`) | rỗng | Hồ sơ của phiên đang đăng nhập (`UserProfilePayload`) | Có trong mã |
+| `GET_PROFILE` (và `PROFILE`) | rỗng | Hồ sơ của phiên đang đăng nhập (`UserProfilePayload` gồm `GioiTinh`, `NgaySinh`/`NamSinh`, `ChieuCaoCm`, `CanNangKg`, `BenhNen`, `DiUng` — cũng dùng để điền sẵn sang Khảo sát nhanh ở Mục 2.5) | Có trong mã |
 | `UPDATE_PROFILE` | `UpdateProfilePayload` | 200 | Có trong mã |
 | `GET_HISTORY` | `GetHistoryPayload {Limit=50}` | Danh sách `SearchHistoryItemPayload` | Có trong mã |
 | `ADD_HISTORY` | `AddHistoryPayload {TuKhoa, DiseaseId?, SoKetQua}` | 200 | Có trong mã |
@@ -129,10 +129,10 @@ Chữ in nghiêng là DTO chưa tồn tại. Mỗi DTO viết trong `HealthShare
 | | `FORCE_LOGOUT` | C->S | `{SessionId, LyDo?}` | User: phiên của mình; SystemAdmin: mọi phiên. Thiếu quyền trả 403 | NV4 |
 | | `NEW_LOGIN_ALERT` | S->C (đẩy) | `{TenMay, DiaChiIP, ThoiGian}` gửi cho các phiên khác của cùng tài khoản | | NV4 |
 | | `FORCED_LOGOUT_NOTICE` | S->C (đẩy) | `{LyDo}` gửi cho phiên bị đá, rồi Server đóng kết nối | | NV4 |
-| Khảo sát | `SURVEY_SUBMIT` | C->S | *SurveyPayload*: nhóm cơ quan, danh sách triệu chứng, thời gian kéo dài, mức độ/ghi chú | Đã đăng nhập | NV2 (2.6) |
-| | `SURVEY_GET_LATEST` | C->S | rỗng | Đã đăng nhập | NV2 |
-| Chat | `CHAT_SEND` | C->S | `{DenUserId, NoiDung, DinhKemKhaoSat: bool}`; nếu `true`, Server tự lấy phiếu khảo sát mới nhất của người gửi đính kèm | Bác sĩ do ContentAdmin đóng vai | NV2 (2.6) |
-| | `CHAT_RECV` | S->C (đẩy) | `{TuUserId, NoiDung, PhieuKhaoSat?, ThoiGian}` | | NV2 |
+| Khảo sát | `SURVEY_SUBMIT` | C->S | *SurveyPayload* (6 phần A–F) — **6 trường bắt buộc** (thiếu trả `400`): `GioiTinh`, `NamSinh`, `NhomCoQuan`, `TrieuChungIds`, `ThoiGianKeoDai`, `MucDoKhoChiu`; **các trường không bắt buộc (`null` nếu bỏ trống)**: `ChieuCaoCm?`, `CanNangKg?`, `DangMangThaiChoConBu?` *(chỉ khi Nữ)*, `NhietDoC?`, `BenhNen?`, `TienSuPhauThuat?`, `ThuocDangDung?`, `DiUngThuoc?`, `DiUngKhac?`, `HutThuocLa?`, `RuouBia?`, `GhiChuThem?` | Đã đăng nhập | NV2 (2.6) |
+| | `SURVEY_GET_LATEST` | C->S | rỗng; trả về phiếu khảo sát mới nhất đủ 6 phần A–F (trường bỏ trống là `null`, phía UI hiện `"Chưa có dữ liệu"`) | Đã đăng nhập | NV2 |
+| Chat | `CHAT_SEND` | C->S | `{DenUserId, NoiDung, DinhKemKhaoSat: bool}`; nếu `true`, Server tự lấy phiếu khảo sát mới nhất đủ 6 phần trong `QuickSurveys` đính kèm | Bác sĩ do ContentAdmin đóng vai | NV2 (2.6) |
+| | `CHAT_RECV` | S->C (đẩy) | `{TuUserId, NoiDung, PhieuKhaoSat?, ThoiGian}`; `PhieuKhaoSat?` gồm thẻ tóm tắt 6 phần (giới tính, tuổi, chiều cao/cân nặng, nhóm cơ quan, triệu chứng, nhiệt độ, thời gian/mức độ, bệnh nền, phẫu thuật, thuốc đang dùng, dị ứng, thói quen, ghi chú thêm, gợi ý tham khảo, thời điểm khảo sát; trường `null` hiển thị `"Chưa có dữ liệu"`) | | NV2 |
 | Đẩy | `BROADCAST_SEND` | C->S | `{Loai, TieuDe, NoiDung}` | ContentAdmin, SystemAdmin | NV2 (2.7) |
 | | `BROADCAST` | S->C (đẩy) | `{Loai, TieuDe, NoiDung, ThoiGian}`; offline thì gửi bù khi đăng nhập lại | | NV2 |
 | | `EMERGENCY_ALERT` | C->S | `{TrieuChung, Muc}`; tối đa 1 lần/phút/người dùng, vượt thì 429 | Đã đăng nhập | NV2 + NV4 |
